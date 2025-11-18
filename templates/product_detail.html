@@ -15,11 +15,20 @@
     <!-- Product Image -->
     <div class="col-md-6 mb-4">
         <div class="card">
-            <img src="{{ product.image_url if product.image_url else 'https://via.placeholder.com/500x500?text=' + product.name|urlencode }}" 
+            {% if product.image_url and product.image_url.strip() %}
+            <img src="{{ product.image_url }}" 
                  class="card-img-top" 
                  alt="{{ product.name }}" 
                  style="height: 500px; object-fit: cover;"
-                 onerror="this.onerror=null; this.src='https://via.placeholder.com/500x500?text=No+Image';">
+                 onerror="this.onerror=null; this.src='https://via.placeholder.com/500x500/e0e0e0/666666?text={{ product.name|urlencode }}';"
+                 loading="lazy">
+            {% else %}
+            <img src="https://via.placeholder.com/500x500/e0e0e0/666666?text={{ product.name|urlencode }}" 
+                 class="card-img-top" 
+                 alt="{{ product.name }}" 
+                 style="height: 500px; object-fit: cover;"
+                 loading="lazy">
+            {% endif %}
         </div>
     </div>
 
