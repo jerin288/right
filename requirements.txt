@@ -8,7 +8,7 @@ python-dotenv==1.0.0
 reportlab==4.0.7
 cashfree-pg>=4.5.0
 gunicorn==21.2.0
-psycopg2-binary==2.9.9
+psycopg[binary]==3.1.18
 
 # Optional packages for enhanced features
 # Uncomment to enable specific features:
