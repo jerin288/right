@@ -25,11 +25,12 @@ from reportlab.lib.enums import TA_CENTER, TA_RIGHT
 from typing import TYPE_CHECKING
 import logging
 import sys
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-from email.mime.base import MIMEBase
-from email import encoders
+# Email imports - DISABLED
+# import smtplib
+# from email.mime.text import MIMEText
+# from email.mime.multipart import MIMEMultipart
+# from email.mime.base import MIMEBase
+# from email import encoders
 
 # Setup logging
 logging.basicConfig(
@@ -83,14 +84,15 @@ ADMIN_PHONE_NUMBER = os.getenv('ADMIN_PHONE_NUMBER', '7510556919')  # Admin phon
 SMS_GATEWAY_API_KEY = os.getenv('SMS_GATEWAY_API_KEY', 'gBNScrPYJ1xaoQ5ZOpeEFsUbKjfXiT0W3utVvh6GRHCILqn4DwWwfeaEFkbJL1QPK6zRBySViD9chr7C')  # Fast2SMS API Key
 USE_SMS_NOTIFICATION = os.getenv('USE_SMS_NOTIFICATION', 'False').lower() == 'true'  # Set to True to enable SMS notifications (requires ₹100 credit)
 
-# Email Configuration
-MAIL_SERVER = os.getenv('MAIL_SERVER', 'smtp.gmail.com')
-MAIL_PORT = int(os.getenv('MAIL_PORT', '587'))
-MAIL_USE_TLS = os.getenv('MAIL_USE_TLS', 'True').lower() == 'true'
-MAIL_USERNAME = os.getenv('MAIL_USERNAME', '')
-MAIL_PASSWORD = os.getenv('MAIL_PASSWORD', '')
-MAIL_DEFAULT_SENDER = os.getenv('MAIL_DEFAULT_SENDER', MAIL_USERNAME)
-USE_EMAIL_NOTIFICATION = os.getenv('USE_EMAIL_NOTIFICATION', 'False').lower() == 'true'
+# Email Configuration - DISABLED
+# Email notification functionality has been removed from the application
+# MAIL_SERVER = os.getenv('MAIL_SERVER', 'smtp.gmail.com')
+# MAIL_PORT = int(os.getenv('MAIL_PORT', '587'))
+# MAIL_USE_TLS = os.getenv('MAIL_USE_TLS', 'True').lower() == 'true'
+# MAIL_USERNAME = os.getenv('MAIL_USERNAME', '')
+# MAIL_PASSWORD = os.getenv('MAIL_PASSWORD', '')
+# MAIL_DEFAULT_SENDER = os.getenv('MAIL_DEFAULT_SENDER', MAIL_USERNAME)
+# USE_EMAIL_NOTIFICATION = os.getenv('USE_EMAIL_NOTIFICATION', 'False').lower() == 'true'
 
 # Cashfree Payment Gateway Configuration
 CASHFREE_APP_ID = os.getenv('CASHFREE_APP_ID', '')  # x-client-id
@@ -172,241 +174,16 @@ def calculate_order_total(cart_items, coupon=None):
     
     return total, subtotal, shipping, coupon_discount
 
-def send_email_notification(to_email, subject, html_body, text_body=None):
-    """Send email notification to user"""
-    try:
-        if not USE_EMAIL_NOTIFICATION or not MAIL_USERNAME or not MAIL_PASSWORD:
-            print("Email notification disabled or credentials not configured")
-            return False
-        
-        # Use port 465 with SSL if TLS is enabled, otherwise use configured port
-        use_ssl = MAIL_USE_TLS and MAIL_PORT == 587
-        smtp_port = 465 if use_ssl else MAIL_PORT
-        
-        print(f"Attempting to connect to {MAIL_SERVER}:{smtp_port} (SSL: {use_ssl})")
-        
-        msg = MIMEMultipart('alternative')
-        msg['From'] = MAIL_DEFAULT_SENDER
-        msg['To'] = to_email
-        msg['Subject'] = subject
-        
-        # Add text and HTML parts
-        if text_body:
-            part1 = MIMEText(text_body, 'plain')
-            msg.attach(part1)
-        
-        part2 = MIMEText(html_body, 'html')
-        msg.attach(part2)
-        
-        # Try SMTP with SSL (port 465) or STARTTLS (port 587)
-        try:
-            if use_ssl:
-                # Use SMTP_SSL for port 465
-                print(f"Creating SMTP_SSL connection...")
-                server = smtplib.SMTP_SSL(MAIL_SERVER, smtp_port, timeout=30)
-                print(f"Logging in as {MAIL_USERNAME}...")
-            else:
-                # Use regular SMTP with STARTTLS for other ports
-                print(f"Creating SMTP connection...")
-                server = smtplib.SMTP(MAIL_SERVER, smtp_port, timeout=30)
-                print(f"Starting TLS...")
-                server.starttls()
-                print(f"Logging in as {MAIL_USERNAME}...")
-            
-            server.login(MAIL_USERNAME, MAIL_PASSWORD)
-            print(f"Sending message to {to_email}...")
-            server.send_message(msg)
-            server.quit()
-            print(f"✅ Email sent successfully to {to_email}")
-            return True
-            
-        except smtplib.SMTPAuthenticationError as e:
-            print(f"❌ SMTP Authentication Error: {e}")
-            print("Check: 1) App password is correct 2) 2FA is enabled")
-            return False
-        except (ConnectionRefusedError, OSError) as e:
-            print(f"❌ Network Error on port {smtp_port}: {e}")
-            if smtp_port == 587:
-                print("Port 587 blocked. Automatically trying port 465 (SSL)...")
-                # Retry with port 465
-                try:
-                    server = smtplib.SMTP_SSL(MAIL_SERVER, 465, timeout=30)
-                    server.login(MAIL_USERNAME, MAIL_PASSWORD)
-                    server.send_message(msg)
-                    server.quit()
-                    print(f"✅ Email sent successfully via port 465 to {to_email}")
-                    return True
-                except Exception as retry_error:
-                    print(f"❌ Port 465 also failed: {retry_error}")
-                    print("⚠️  Render free tier blocks outbound SMTP. Consider:")
-                    print("   1. Upgrade Render plan")
-                    print("   2. Use SendGrid API (free 100 emails/day)")
-                    print("   3. Use alternative email service")
-                    return False
-            else:
-                print("⚠️  SMTP ports blocked by hosting provider")
-                return False
-        except TimeoutError as e:
-            print(f"❌ Connection Timeout: {e}")
-            return False
-        except smtplib.SMTPException as e:
-            print(f"❌ SMTP Error: {e}")
-            return False
-        
-    except Exception as e:
-        print(f"❌ Error sending email notification: {e}")
-        import traceback
-        traceback.print_exc()
-        return False
+# Email notification function - DISABLED
+# def send_email_notification(to_email, subject, html_body, text_body=None):
+#     """Send email notification to user - DISABLED"""
+#     print("Email notifications have been disabled")
+#     return False
 
-def generate_order_confirmation_email(order):
-    """Generate HTML email for order confirmation"""
-    items_html = ""
-    for item in order.items:
-        items_html += f"""
-        <tr>
-            <td style="padding: 10px; border-bottom: 1px solid #eee;">{item.product.name}</td>
-            <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: center;">{item.quantity}</td>
-            <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">₹{item.price:.2f}</td>
-            <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">₹{(item.price * item.quantity):.2f}</td>
-        </tr>
-        """
-    
-    # Generate pricing breakdown
-    subtotal = sum(item.price * item.quantity for item in order.items)
-    shipping = 0 if subtotal >= FREE_SHIPPING_THRESHOLD else SHIPPING_CHARGE
-    
-    pricing_breakdown = f"""
-        <tr>
-            <td colspan="3" style="padding: 10px; text-align: right;">Subtotal:</td>
-            <td style="padding: 10px; text-align: right;">₹{subtotal:.2f}</td>
-        </tr>
-        <tr>
-            <td colspan="3" style="padding: 10px; text-align: right;">Shipping:</td>
-            <td style="padding: 10px; text-align: right;">{'FREE' if shipping == 0 else f'₹{shipping:.2f}'}</td>
-        </tr>
-    """
-    
-    # Add coupon discount if applicable
-    if order.coupon_code and order.coupon_discount > 0:
-        pricing_breakdown += f"""
-        <tr>
-            <td colspan="3" style="padding: 10px; text-align: right; color: #28a745;">Coupon Discount ({order.coupon_code}):</td>
-            <td style="padding: 10px; text-align: right; color: #28a745;">-₹{order.coupon_discount:.2f}</td>
-        </tr>
-        """
-    
-    payment_method = "Cash on Delivery" if order.payment_method == 'COD' else "Online Payment"
-    
-    # Get base URL from environment, remove trailing slash
-    base_url = os.getenv('BASE_URL', 'http://127.0.0.1:5000').rstrip('/')
-    
-    html = f"""
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    </head>
-    <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-        <div style="background-color: #dc143c; color: white; padding: 20px; text-align: center; border-radius: 5px 5px 0 0;">
-            <h1 style="margin: 0;">Right Fit Thrissur</h1>
-            <p style="margin: 5px 0 0 0;">Order Confirmation</p>
-        </div>
-        
-        <div style="background-color: #f9f9f9; padding: 20px; border: 1px solid #ddd; border-top: none; border-radius: 0 0 5px 5px;">
-            <h2 style="color: #dc143c; margin-top: 0;">Thank You for Your Order!</h2>
-            
-            <p>Dear {order.user.username},</p>
-            
-            <p>Your order has been successfully placed. We'll send you shipping updates once your order is dispatched.</p>
-            
-            <div style="background-color: white; padding: 15px; border-radius: 5px; margin: 20px 0;">
-                <h3 style="margin-top: 0; color: #dc143c;">Order Details</h3>
-                <p><strong>Order ID:</strong> #{order.id}</p>
-                <p><strong>Order Date:</strong> {order.created_at.strftime('%B %d, %Y at %I:%M %p')}</p>
-                <p><strong>Payment Method:</strong> {payment_method}</p>
-                <p><strong>Order Status:</strong> {order.status}</p>
-            </div>
-            
-            <div style="background-color: white; padding: 15px; border-radius: 5px; margin: 20px 0;">
-                <h3 style="margin-top: 0; color: #dc143c;">Shipping Address</h3>
-                <p style="margin: 5px 0;">{order.shipping_address}</p>
-                <p style="margin: 5px 0;"><strong>Phone:</strong> {order.phone}</p>
-            </div>
-            
-            <div style="background-color: white; padding: 15px; border-radius: 5px; margin: 20px 0;">
-                <h3 style="margin-top: 0; color: #dc143c;">Order Items</h3>
-                <table style="width: 100%; border-collapse: collapse;">
-                    <thead>
-                        <tr style="background-color: #f0f0f0;">
-                            <th style="padding: 10px; text-align: left; border-bottom: 2px solid #ddd;">Product</th>
-                            <th style="padding: 10px; text-align: center; border-bottom: 2px solid #ddd;">Qty</th>
-                            <th style="padding: 10px; text-align: right; border-bottom: 2px solid #ddd;">Price</th>
-                            <th style="padding: 10px; text-align: right; border-bottom: 2px solid #ddd;">Total</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {items_html}
-                    </tbody>
-                    <tfoot>
-                        {pricing_breakdown}
-                        <tr>
-                            <td colspan="3" style="padding: 15px 10px; text-align: right; font-weight: bold; border-top: 2px solid #ddd;">Order Total:</td>
-                            <td style="padding: 15px 10px; text-align: right; font-weight: bold; font-size: 18px; color: #dc143c; border-top: 2px solid #ddd;">₹{order.total_amount:.2f}</td>
-                        </tr>
-                    </tfoot>
-                </table>
-            </div>
-            
-            <div style="background-color: #fff3cd; padding: 15px; border-radius: 5px; border-left: 4px solid #ffc107; margin: 20px 0;">
-                <p style="margin: 0;"><strong>Note:</strong> You can track your order status by logging into your account.</p>
-            </div>
-            
-            <div style="text-align: center; margin: 30px 0;">
-                <a href="{base_url}/my_orders" style="background-color: #dc143c; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block;">View Order Status</a>
-            </div>
-            
-            <div style="border-top: 2px solid #ddd; padding-top: 20px; margin-top: 30px; text-align: center; color: #666; font-size: 14px;">
-                <p><strong>Need Help?</strong></p>
-                <p>Contact us: <a href="mailto:rightfit2023@gmail.com" style="color: #dc143c;">rightfit2023@gmail.com</a> | Phone: +91 8157971886</p>
-                <p>WhatsApp: <a href="https://wa.me/918157971886" style="color: #dc143c;">+91 8157971886</a></p>
-                <p style="margin-top: 20px; color: #999; font-size: 12px;">© 2025 Right Fit Thrissur. All rights reserved.</p>
-            </div>
-        </div>
-    </body>
-    </html>
-    """
-    
-    # Plain text version
-    text = f"""
-    Right Fit Thrissur - Order Confirmation
-    
-    Dear {order.user.username},
-    
-    Thank you for your order!
-    
-    Order Details:
-    - Order ID: #{order.id}
-    - Order Date: {order.created_at.strftime('%B %d, %Y at %I:%M %p')}
-    - Payment Method: {payment_method}
-    - Order Total: ₹{order.total_amount:.2f}
-    
-    Shipping Address:
-    {order.shipping_address}
-    Phone: {order.phone}
-    
-    Track your order: {base_url}/my_orders
-    
-    Need help? Contact us:
-    Email: rightfit2023@gmail.com
-    Phone: +91 8157971886
-    WhatsApp: +91 8157971886
-    
-    © 2025 Right Fit Thrissur
-    """
-    
-    return html, text
+# Email template generation function - DISABLED
+# def generate_order_confirmation_email(order):
+#     """Generate HTML email for order confirmation - DISABLED"""
+#     return None, None
 
 def send_sms_notification(order):
     """Send SMS notification to admin about new order using Fast2SMS"""
@@ -1420,20 +1197,20 @@ def checkout():
         
         print(f"DEBUG: Order #{order.id} created with payment method: {payment_method}")
         
-        # Send order confirmation email (non-blocking, catch all errors)
-        try:
-            print(f"DEBUG: Attempting to send email to {current_user.email}")
-            html_body, text_body = generate_order_confirmation_email(order)
-            send_email_notification(
-                to_email=current_user.email,
-                subject=f"Order Confirmation - #{order.id} | Right Fit Thrissur",
-                html_body=html_body,
-                text_body=text_body
-            )
-            print(f"DEBUG: Email send attempt completed")
-        except Exception as e:
-            print(f"Error sending order confirmation email: {e}")
-            # Don't fail the order if email fails
+        # Email notifications have been disabled
+        # try:
+        #     print(f"DEBUG: Attempting to send email to {current_user.email}")
+        #     html_body, text_body = generate_order_confirmation_email(order)
+        #     send_email_notification(
+        #         to_email=current_user.email,
+        #         subject=f"Order Confirmation - #{order.id} | Right Fit Thrissur",
+        #         html_body=html_body,
+        #         text_body=text_body
+        #     )
+        #     print(f"DEBUG: Email send attempt completed")
+        # except Exception as e:
+        #     print(f"Error sending order confirmation email: {e}")
+        #     # Don't fail the order if email fails
         
         # Handle payment method
         if payment_method == 'ONLINE':
@@ -1455,7 +1232,7 @@ def checkout():
             except Exception as e:
                 print(f"Error sending customer SMS: {e}")
             
-            flash(f'Order placed successfully! Order ID: {order.id}. Check your email for confirmation.', 'success')
+            flash(f'Order placed successfully! Order ID: {order.id}. You will receive SMS updates.', 'success')
             return redirect(url_for('order_confirmation', order_id=order.id))
     
     total_amount, subtotal, shipping, _ = calculate_order_total(cart_items)
@@ -1823,19 +1600,19 @@ def payment_callback():
             # Send SMS notification to admin
             send_sms_notification(order)
             
-            # Send order confirmation email
-            try:
-                html_body, text_body = generate_order_confirmation_email(order)
-                send_email_notification(
-                    to_email=order.user.email,
-                    subject=f"Payment Successful - Order #{order.id} | Right Fit Thrissur",
-                    html_body=html_body,
-                    text_body=text_body
-                )
-            except Exception as e:
-                print(f"Error sending payment confirmation email: {e}")
+            # Email notifications have been disabled
+            # try:
+            #     html_body, text_body = generate_order_confirmation_email(order)
+            #     send_email_notification(
+            #         to_email=order.user.email,
+            #         subject=f"Payment Successful - Order #{order.id} | Right Fit Thrissur",
+            #         html_body=html_body,
+            #         text_body=text_body
+            #     )
+            # except Exception as e:
+            #     print(f"Error sending payment confirmation email: {e}")
             
-            flash(f'Payment successful! Order ID: {order.id}. Check your email for confirmation.', 'success')
+            flash(f'Payment successful! Order ID: {order.id}. You will receive SMS updates.', 'success')
             return redirect(url_for('payment_success', order_id=order.id))
         elif payment_status == 'ACTIVE':
             # Payment is pending/in progress
@@ -2545,12 +2322,7 @@ def admin_config_check():
     import json
     config_status = {
         'Email Notification': {
-            'Enabled': USE_EMAIL_NOTIFICATION,
-            'Mail Server': MAIL_SERVER,
-            'Mail Port': MAIL_PORT,
-            'Mail Username': MAIL_USERNAME if MAIL_USERNAME else 'NOT SET',
-            'Mail Password': 'SET' if MAIL_PASSWORD else 'NOT SET',
-            'Default Sender': MAIL_DEFAULT_SENDER if MAIL_DEFAULT_SENDER else 'NOT SET'
+            'Status': 'DISABLED - Email functionality has been removed'
         },
         'SMS Notification': {
             'Enabled': USE_SMS_NOTIFICATION,
