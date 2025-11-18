@@ -2415,6 +2415,38 @@ def admin_edit_category(category_id):
     return redirect(url_for('admin_categories'))
 
 
+@app.route('/admin/config-check')
+@login_required
+def admin_config_check():
+    """Admin route to check notification configuration"""
+    if not current_user.is_admin:
+        flash('Access denied', 'danger')
+        return redirect(url_for('index'))
+    
+    import json
+    config_status = {
+        'Email Notification': {
+            'Enabled': USE_EMAIL_NOTIFICATION,
+            'Mail Server': MAIL_SERVER,
+            'Mail Port': MAIL_PORT,
+            'Mail Username': MAIL_USERNAME if MAIL_USERNAME else 'NOT SET',
+            'Mail Password': 'SET' if MAIL_PASSWORD else 'NOT SET',
+            'Default Sender': MAIL_DEFAULT_SENDER if MAIL_DEFAULT_SENDER else 'NOT SET'
+        },
+        'SMS Notification': {
+            'Enabled': USE_SMS_NOTIFICATION,
+            'Admin Phone': ADMIN_PHONE_NUMBER if ADMIN_PHONE_NUMBER else 'NOT SET',
+            'API Key': 'SET' if SMS_GATEWAY_API_KEY else 'NOT SET'
+        },
+        'Cashfree': {
+            'Environment': CASHFREE_ENVIRONMENT,
+            'Configured': bool(CASHFREE_APP_ID and CASHFREE_SECRET_KEY)
+        }
+    }
+    
+    return f"<html><body><h1>Configuration Status</h1><pre>{json.dumps(config_status, indent=2)}</pre></body></html>"
+
+
 # ==================== ROUTES - ADMIN COUPONS ====================
 
 @app.route('/admin/coupons')
