@@ -5,5 +5,5 @@ set -o errexit
 # Install dependencies
 pip install -r requirements.txt
 
-# Run database initialization
-python -c "from app import app, db; app.app_context().push(); db.create_all(); print('Database tables created successfully!')"
+# Run database initialization with sample data (including admin user)
+python -c "from app import app, init_db; init_db(); print('Database initialized successfully with admin user!')"
