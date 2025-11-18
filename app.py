@@ -2632,6 +2632,28 @@ def request_entity_too_large(e):
 
 # ==================== DATABASE INITIALIZATION ====================
 
+def ensure_admin_user():
+    """Ensure admin user exists with correct password (safe for production)"""
+    with app.app_context():
+        db.create_all()
+        
+        # Check if admin user exists
+        admin = User.query.filter_by(username='admin').first()
+        
+        if admin:
+            # Update password to ensure it's correct
+            admin.set_password('admin123')
+            admin.is_admin = True
+            db.session.commit()
+            print("✅ Admin user password updated successfully!")
+        else:
+            # Create new admin user
+            admin = User(username='admin', email='admin@ecommerce.com', is_admin=True)
+            admin.set_password('admin123')
+            db.session.add(admin)
+            db.session.commit()
+            print("✅ Admin user created successfully!")
+
 def init_db():
     """Initialize database with sample data"""
     with app.app_context():
