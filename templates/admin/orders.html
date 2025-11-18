@@ -1,0 +1,220 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Orders - Admin{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="fas fa-shopping-bag"></i> Manage Orders</h1>
+    <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left"></i> Back to Dashboard
+    </a>
+</div>
+
+{% if orders %}
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Customer</th>
+                        <th>Total Amount</th>
+                        <th>Payment</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                        <th>Items</th>
+                        <th>Shipping Address</th>
+                        <th>Phone</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in orders %}
+                    <tr>
+                        <td><strong>#{{ order.id }}</strong></td>
+                        <td>{{ order.user.username }}</td>
+                        <td><strong>₹{{ "%.2f"|format(order.total_amount) }}</strong></td>
+                        <td>
+                            {% if order.payment_method == 'COD' %}
+                                <span class="badge bg-success"><i class="fas fa-money-bill"></i> COD</span>
+                            {% else %}
+                                <span class="badge bg-primary"><i class="fas fa-credit-card"></i> Online</span>
+                            {% endif %}
+                            <br>
+                            {% if order.payment_status == 'PAID' %}
+                                <small><span class="badge bg-success mt-1">Paid</span></small>
+                            {% elif order.payment_status == 'FAILED' %}
+                                <small><span class="badge bg-danger mt-1">Failed</span></small>
+                            {% elif order.payment_status == 'CANCELLED' %}
+                                <small><span class="badge bg-secondary mt-1">Cancelled</span></small>
+                            {% elif order.payment_status == 'REFUND_PENDING' %}
+                                <small><span class="badge bg-warning mt-1">Refund Pending</span></small>
+                            {% elif order.payment_status == 'REFUNDED' %}
+                                <small><span class="badge bg-info mt-1">Refunded</span></small>
+                            {% else %}
+                                <small><span class="badge bg-warning mt-1">Pending</span></small>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if order.status == 'Pending' %}
+                            <span class="badge bg-warning text-dark">{{ order.status }}</span>
+                            {% elif order.status == 'Processing' %}
+                            <span class="badge bg-info">{{ order.status }}</span>
+                            {% elif order.status == 'Shipped' %}
+                            <span class="badge bg-primary">{{ order.status }}</span>
+                            {% elif order.status == 'Delivered' %}
+                            <span class="badge bg-success">{{ order.status }}</span>
+                            {% elif order.status == 'Cancelled' %}
+                            <span class="badge bg-danger">{{ order.status }}</span>
+                            {% else %}
+                            <span class="badge bg-secondary">{{ order.status }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ order.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-info" type="button" 
+                                    data-bs-toggle="collapse" 
+                                    data-bs-target="#items-{{ order.id }}">
+                                <i class="fas fa-list"></i> View Items ({{ order.items|length }})
+                            </button>
+                        </td>
+                        <td>
+                            <small>{{ order.shipping_address|truncate(30) }}</small>
+                        </td>
+                        <td>{{ order.phone }}</td>
+                        <td>
+                            <form action="{{ url_for('admin_update_order', order_id=order.id) }}" 
+                                  method="post" class="d-inline" id="status-form-{{ order.id }}">
+                                <div class="input-group input-group-sm" style="max-width: 200px;">
+                                    <select name="status" class="form-select form-select-sm" 
+                                            onchange="this.form.submit()" 
+                                            title="Change status (auto-submits)">
+                                        <option value="Pending" {% if order.status == 'Pending' %}selected{% endif %}>Pending</option>
+                                        <option value="Processing" {% if order.status == 'Processing' %}selected{% endif %}>Processing</option>
+                                        <option value="Shipped" {% if order.status == 'Shipped' %}selected{% endif %}>Shipped</option>
+                                        <option value="Delivered" {% if order.status == 'Delivered' %}selected{% endif %}>Delivered</option>
+                                        <option value="Cancelled" {% if order.status == 'Cancelled' %}selected{% endif %}>Cancelled</option>
+                                    </select>
+                                    <button type="submit" class="btn btn-sm btn-outline-primary" title="Update status">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                </div>
+                            </form>
+                            {% if order.payment_method == 'COD' and order.status == 'Delivered' and order.payment_status == 'PENDING' %}
+                                <small class="text-muted d-block mt-1">
+                                    <i class="fas fa-info-circle"></i> Will mark COD as paid
+                                </small>
+                            {% endif %}
+                            <br>
+                            {% if order.payment_status == 'PAID' and order.status != 'Cancelled' %}
+                            <form action="{{ url_for('admin_cancel_paid_order', order_id=order.id) }}" 
+                                  method="post" class="d-inline" 
+                                  onsubmit="return confirm('Cancel PAID order #{{ order.id }}? This will mark refund as pending. You must process refund manually via Cashfree!');">
+                                <button type="submit" class="btn btn-sm btn-warning mt-1">
+                                    <i class="fas fa-undo"></i> Cancel & Refund
+                                </button>
+                            </form>
+                            {% elif order.payment_status == 'REFUND_PENDING' %}
+                            <form action="{{ url_for('admin_mark_refunded', order_id=order.id) }}" 
+                                  method="post" class="d-inline" 
+                                  onsubmit="return confirm('Confirm that refund has been processed via Cashfree for order #{{ order.id }}?');">
+                                <button type="submit" class="btn btn-sm btn-success mt-1">
+                                    <i class="fas fa-check"></i> Mark Refunded
+                                </button>
+                            </form>
+                            {% endif %}
+                            <form action="{{ url_for('admin_delete_order', order_id=order.id) }}" 
+                                  method="post" class="d-inline" 
+                                  onsubmit="return confirm('Are you sure you want to delete order #{{ order.id }}? This action cannot be undone!');">
+                                <button type="submit" class="btn btn-sm btn-danger mt-1">
+                                    <i class="fas fa-trash"></i> Delete
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    <tr class="collapse" id="items-{{ order.id }}">
+                        <td colspan="10">
+                            <div class="p-3 bg-light">
+                                <h6>Order Items:</h6>
+                                <table class="table table-sm table-bordered">
+                                    <thead>
+                                        <tr>
+                                            <th>Product</th>
+                                            <th>Quantity</th>
+                                            <th>Size</th>
+                                            <th>Color</th>
+                                            <th>Price</th>
+                                            <th>Subtotal</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for item in order.items %}
+                                        <tr>
+                                            <td>{{ item.product.name }}</td>
+                                            <td>{{ item.quantity }}</td>
+                                            <td>{{ item.size or '-' }}</td>
+                                            <td>{{ item.color or '-' }}</td>
+                                            <td>₹{{ "%.2f"|format(item.price) }}</td>
+                                            <td><strong>₹{{ "%.2f"|format(item.price * item.quantity) }}</strong></td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                                <div class="mt-2">
+                                    <strong>Shipping Address:</strong> {{ order.shipping_address }}<br>
+                                    <strong>Phone:</strong> {{ order.phone }}
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="mt-4">
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card text-white bg-warning">
+                <div class="card-body">
+                    <h5 class="card-title">Pending Orders</h5>
+                    <h3>{{ orders|selectattr('status', 'equalto', 'Pending')|list|length }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-info">
+                <div class="card-body">
+                    <h5 class="card-title">Processing</h5>
+                    <h3>{{ orders|selectattr('status', 'equalto', 'Processing')|list|length }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-primary">
+                <div class="card-body">
+                    <h5 class="card-title">Shipped</h5>
+                    <h3>{{ orders|selectattr('status', 'equalto', 'Shipped')|list|length }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-success">
+                <div class="card-body">
+                    <h5 class="card-title">Delivered</h5>
+                    <h3>{{ orders|selectattr('status', 'equalto', 'Delivered')|list|length }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% else %}
+<div class="alert alert-info">
+    <i class="fas fa-info-circle"></i> No orders yet. Orders will appear here once customers start placing them.
+</div>
+{% endif %}
+{% endblock %}

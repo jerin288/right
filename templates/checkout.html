@@ -1,0 +1,274 @@
+{% extends "base.html" %}
+
+{% block title %}Checkout - Right Fit Thrissur{% endblock %}
+
+{% block content %}
+<h1 class="mb-4"><i class="fas fa-credit-card"></i> Checkout</h1>
+
+<div class="row">
+    <!-- Checkout Form -->
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Shipping Information</h5>
+            </div>
+            <div class="card-body">
+                <form action="{{ url_for('checkout') }}" method="post">
+                    <div class="mb-3">
+                        <label for="phone" class="form-label">Phone Number *</label>
+                        <input type="tel" class="form-control" id="phone" name="phone" 
+                               placeholder="+91 8157971886" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="shipping_address" class="form-label">Shipping Address *</label>
+                        <textarea class="form-control" id="shipping_address" name="shipping_address" 
+                                  rows="4" placeholder="Enter your complete address with city, state, and PIN code" required></textarea>
+                        <small class="text-muted">Please provide a complete address including street, city, state, and PIN code</small>
+                    </div>
+
+                    <!-- Coupon Code Section -->
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="fas fa-ticket-alt"></i> Have a Coupon Code?</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="couponCodeInput" 
+                                       placeholder="Enter coupon code" maxlength="50">
+                                <button type="button" class="btn btn-outline-primary" id="applyCouponBtn">
+                                    Apply
+                                </button>
+                            </div>
+                            <input type="hidden" name="coupon_code" id="couponCodeHidden">
+                            <div id="couponMessage" class="mt-2"></div>
+                        </div>
+                    </div>
+
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <h6 class="mb-0">Payment Method</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="radio" name="payment_method" 
+                                       id="cod" value="COD" checked>
+                                <label class="form-check-label" for="cod">
+                                    <i class="fas fa-money-bill-wave text-success"></i> 
+                                    <strong>Cash on Delivery</strong>
+                                    <br><small class="text-muted">Pay when you receive the order</small>
+                                </label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="radio" name="payment_method" 
+                                       id="online" value="ONLINE">
+                                <label class="form-check-label" for="online">
+                                    <i class="fas fa-credit-card text-primary"></i> 
+                                    <strong>Pay Online</strong>
+                                    <br><small class="text-muted">UPI, Cards, Net Banking, Wallets (Powered by Cashfree)</small>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="terms" required>
+                        <label class="form-check-label" for="terms">
+                            I agree to the <a href="{{ url_for('terms') }}" target="_blank">terms and conditions</a>
+                        </label>
+                    </div>
+
+                    <button type="submit" class="btn btn-success btn-lg w-100">
+                        <i class="fas fa-lock"></i> Place Order
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Order Summary -->
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0">Order Summary</h5>
+            </div>
+            <div class="card-body">
+                <!-- Cart Items Summary -->
+                <h6 class="mb-3">Items ({{ cart_items|length }})</h6>
+                <div class="mb-3" style="max-height: 200px; overflow-y: auto;">
+                    {% for item in cart_items %}
+                    <div class="d-flex justify-content-between mb-2">
+                        <div class="small">
+                            <strong>{{ item.product.name }}</strong><br>
+                            <span class="text-muted">
+                                {{ item.quantity }} x ₹{{ "%.2f"|format(item.product.price) }}
+                                {% if item.size %} | Size: {{ item.size }}{% endif %}
+                                {% if item.color %} | Color: {{ item.color }}{% endif %}
+                            </span>
+                        </div>
+                        <div class="small">
+                            ₹{{ "%.2f"|format(item.product.price * item.quantity) }}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <hr>
+
+                <!-- Coupon Discount -->
+                <div id="couponDiscountSection" style="display: none;">
+                    <div class="d-flex justify-content-between mb-2 text-success">
+                        <span>
+                            <i class="fas fa-tag"></i> Coupon (<span id="appliedCouponCode"></span>)
+                            <button type="button" class="btn btn-link btn-sm text-danger p-0 ms-1" id="removeCouponBtn" title="Remove coupon">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </span>
+                        <strong id="couponDiscountAmount">-₹0.00</strong>
+                    </div>
+                </div>
+
+                <hr id="totalHr">
+
+                <!-- Price Breakdown -->
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Subtotal:</span>
+                    <strong>₹{{ "%.2f"|format(subtotal) }}</strong>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Shipping:</span>
+                    <strong>
+                        {% if shipping == 0 %}
+                            <span class="text-success">FREE</span>
+                        {% else %}
+                            ₹{{ "%.2f"|format(shipping) }}
+                        {% endif %}
+                    </strong>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Tax (Included):</span>
+                    <span class="text-muted">₹0.00</span>
+                </div>
+                <hr>
+                <div class="d-flex justify-content-between mb-3">
+                    <strong>Total Amount:</strong>
+                    <strong class="price-tag" id="totalAmount" data-original-total="{{ total }}">
+                        ₹{{ "%.2f"|format(total) }}
+                    </strong>
+                </div>
+
+                {% if shipping == 0 %}
+                <div class="alert alert-success small">
+                    <i class="fas fa-check-circle"></i> You're eligible for FREE shipping!
+                </div>
+                {% else %}
+                <div class="alert alert-info small">
+                    <i class="fas fa-info-circle"></i> Add ₹{{ "%.2f"|format(free_shipping_threshold - subtotal) }} more for FREE shipping!
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Security Badge -->
+        <div class="card mt-3">
+            <div class="card-body text-center">
+                <i class="fas fa-lock fa-3x text-success mb-2"></i>
+                <p class="small text-muted mb-0">
+                    Your payment information is secure and encrypted
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Coupon code functionality
+(function() {
+    let appliedCoupon = null;
+    const originalTotal = parseFloat(document.getElementById('totalAmount').dataset.originalTotal);
+
+    document.getElementById('applyCouponBtn').addEventListener('click', function() {
+        const couponCode = document.getElementById('couponCodeInput').value.trim().toUpperCase();
+        const messageDiv = document.getElementById('couponMessage');
+        const applyBtn = this;
+        
+        if (!couponCode) {
+            showCouponMessage('Please enter a coupon code', 'danger');
+            return;
+        }
+        
+        // Disable button and show loading
+        applyBtn.disabled = true;
+        applyBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Applying...';
+        
+        // Send AJAX request to validate coupon
+        fetch('{{ url_for("validate_coupon") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: 'coupon_code=' + encodeURIComponent(couponCode)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.valid) {
+                // Coupon is valid - update UI
+                appliedCoupon = data;
+                document.getElementById('couponCodeHidden').value = data.coupon_code;
+                document.getElementById('appliedCouponCode').textContent = data.coupon_code;
+                document.getElementById('couponDiscountAmount').textContent = '-₹' + data.discount_amount.toFixed(2);
+                document.getElementById('totalAmount').textContent = '₹' + data.total.toFixed(2);
+                
+                // Show coupon discount section
+                document.getElementById('couponDiscountSection').style.display = 'block';
+                
+                // Disable input and change button
+                document.getElementById('couponCodeInput').disabled = true;
+                applyBtn.style.display = 'none';
+                
+                showCouponMessage(data.message, 'success');
+            } else {
+                showCouponMessage(data.message, 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showCouponMessage('Error applying coupon. Please try again.', 'danger');
+        })
+        .finally(() => {
+            applyBtn.disabled = false;
+            applyBtn.innerHTML = 'Apply';
+        });
+    });
+
+    // Remove coupon
+    document.getElementById('removeCouponBtn').addEventListener('click', function() {
+        appliedCoupon = null;
+        document.getElementById('couponCodeHidden').value = '';
+        document.getElementById('couponCodeInput').value = '';
+        document.getElementById('couponCodeInput').disabled = false;
+        document.getElementById('applyCouponBtn').style.display = 'inline-block';
+        document.getElementById('couponDiscountSection').style.display = 'none';
+        document.getElementById('totalAmount').textContent = '₹' + originalTotal.toFixed(2);
+        document.getElementById('couponMessage').innerHTML = '';
+    });
+
+    // Show coupon message
+    function showCouponMessage(message, type) {
+        const messageDiv = document.getElementById('couponMessage');
+        messageDiv.innerHTML = `<div class="alert alert-${type} alert-dismissible fade show" role="alert">
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>`;
+    }
+
+    // Allow Enter key to apply coupon
+    document.getElementById('couponCodeInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            document.getElementById('applyCouponBtn').click();
+        }
+    });
+})();
+</script>
+{% endblock %}

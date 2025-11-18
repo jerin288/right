@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block title %}{{ product.name }} - Right Fit Thrissur{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Home</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('products') }}">Products</a></li>
+        <li class="breadcrumb-item active">{{ product.name }}</li>
+    </ol>
+</nav>
+
+<div class="row">
+    <!-- Product Image -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <img src="{{ product.image_url if product.image_url else 'https://via.placeholder.com/500x500?text=' + product.name|urlencode }}" 
+                 class="card-img-top" 
+                 alt="{{ product.name }}" 
+                 style="height: 500px; object-fit: cover;"
+                 onerror="this.onerror=null; this.src='https://via.placeholder.com/500x500?text=No+Image';">
+        </div>
+    </div>
+
+    <!-- Product Details -->
+    <div class="col-md-6">
+        <h1 class="mb-3">{{ product.name }}</h1>
+        
+        <div class="mb-3">
+            <span class="badge bg-secondary">{{ product.category.name }}</span>
+        </div>
+        
+        <h2 class="price-tag mb-4">₹{{ "%.2f"|format(product.price) }}</h2>
+        
+        <div class="mb-4">
+            <h5>Product Description</h5>
+            <p class="text-muted">{{ product.description }}</p>
+        </div>
+
+        <!-- Stock Status -->
+        <div class="mb-3">
+            {% if product.stock > 0 %}
+                <span class="badge bg-success">
+                    <i class="fas fa-check-circle"></i> In Stock ({{ product.stock }} available)
+                </span>
+            {% else %}
+                <span class="badge bg-danger">
+                    <i class="fas fa-times-circle"></i> Out of Stock
+                </span>
+            {% endif %}
+        </div>
+
+        <!-- Add to Cart Form -->
+        {% if product.stock > 0 %}
+        <form action="{{ url_for('add_to_cart', product_id=product.id) }}" method="post">
+            <!-- Size Selection -->
+            {% if product.sizes %}
+            <div class="mb-3">
+                <label class="form-label"><strong>Select Size:</strong></label>
+                <div class="btn-group" role="group">
+                    {% for size in product.sizes.split(',') %}
+                    <input type="radio" class="btn-check" name="size" id="size-{{ size }}" value="{{ size }}" required>
+                    <label class="btn btn-outline-primary" for="size-{{ size }}">{{ size }}</label>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Color Selection -->
+            {% if product.colors %}
+            <div class="mb-3">
+                <label class="form-label"><strong>Select Color:</strong></label>
+                <div class="btn-group" role="group">
+                    {% for color in product.colors.split(',') %}
+                    <input type="radio" class="btn-check" name="color" id="color-{{ color }}" value="{{ color }}" required>
+                    <label class="btn btn-outline-secondary" for="color-{{ color }}">{{ color }}</label>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Quantity Selection -->
+            <div class="mb-3">
+                <label for="quantity" class="form-label"><strong>Quantity:</strong></label>
+                <input type="number" class="form-control" id="quantity" name="quantity" 
+                       value="1" min="1" max="{{ product.stock }}" style="width: 100px;" required>
+            </div>
+
+            {% if current_user.is_authenticated %}
+                <button type="submit" class="btn btn-primary btn-lg w-100">
+                    <i class="fas fa-shopping-cart"></i> Add to Cart
+                </button>
+            {% else %}
+                <a href="{{ url_for('login') }}" class="btn btn-primary btn-lg w-100">
+                    <i class="fas fa-sign-in-alt"></i> Login to Purchase
+                </a>
+            {% endif %}
+        </form>
+        {% endif %}
+
+        <!-- Product Features -->
+        <div class="mt-4">
+            <h5>Product Features</h5>
+            <ul class="list-unstyled">
+                <li><i class="fas fa-check text-success"></i> Premium Quality Material</li>
+                <li><i class="fas fa-check text-success"></i> Comfortable Fit</li>
+                <li><i class="fas fa-check text-success"></i> Easy to Wash & Maintain</li>
+                <li><i class="fas fa-check text-success"></i> 7-Day Return Policy</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- Related Products -->
+<div class="mt-5">
+    <h3 class="mb-4">You May Also Like</h3>
+    <div class="row">
+        <!-- You can add related products query here -->
+        <div class="col-12">
+            <a href="{{ url_for('products', category=product.category_id) }}" class="btn btn-outline-primary">
+                View More from {{ product.category.name }}
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

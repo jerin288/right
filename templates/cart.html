@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+
+{% block title %}Shopping Cart - Right Fit Thrissur{% endblock %}
+
+{% block content %}
+<h1 class="mb-4"><i class="fas fa-shopping-cart"></i> Shopping Cart</h1>
+
+{% if cart_items %}
+<div class="row">
+    <!-- Cart Items -->
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Size</th>
+                                <th>Color</th>
+                                <th>Price</th>
+                                <th>Quantity</th>
+                                <th>Subtotal</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in cart_items %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <img src="{{ item.product.image_url if item.product.image_url else 'https://via.placeholder.com/60x60?text=No+Image' }}" 
+                                             alt="{{ item.product.name }}" 
+                                             style="width: 60px; height: 60px; object-fit: cover;" 
+                                             class="me-3"
+                                             onerror="this.onerror=null; this.src='https://via.placeholder.com/60x60?text=?';">
+                                        <div>
+                                            <strong>{{ item.product.name }}</strong><br>
+                                            <small class="text-muted">{{ item.product.category.name }}</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>{{ item.size or 'N/A' }}</td>
+                                <td>{{ item.color or 'N/A' }}</td>
+                                <td>₹{{ "%.2f"|format(item.product.price) }}</td>
+                                <td>
+                                    <form action="{{ url_for('update_cart', cart_id=item.id) }}" method="post" class="d-inline">
+                                        <input type="number" name="quantity" value="{{ item.quantity }}" 
+                                               min="1" max="{{ item.product.stock }}" 
+                                               style="width: 60px;" class="form-control form-control-sm d-inline"
+                                               onchange="this.form.submit()">
+                                    </form>
+                                </td>
+                                <td><strong>₹{{ "%.2f"|format(item.product.price * item.quantity) }}</strong></td>
+                                <td>
+                                    <a href="{{ url_for('remove_from_cart', cart_id=item.id) }}" 
+                                       class="btn btn-sm btn-danger"
+                                       onclick="return confirm('Remove this item from cart?')">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-3">
+            <a href="{{ url_for('products') }}" class="btn btn-outline-primary">
+                <i class="fas fa-arrow-left"></i> Continue Shopping
+            </a>
+        </div>
+    </div>
+
+    <!-- Cart Summary -->
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Order Summary</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Subtotal:</span>
+                    <strong>₹{{ "%.2f"|format(subtotal) }}</strong>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Shipping:</span>
+                    <strong>
+                        {% if shipping == 0 %}
+                            <span class="text-success">FREE</span>
+                        {% else %}
+                            ₹{{ "%.2f"|format(shipping) }}
+                        {% endif %}
+                    </strong>
+                </div>
+                <hr>
+                <div class="d-flex justify-content-between mb-3">
+                    <strong>Total:</strong>
+                    <strong class="price-tag">
+                        ₹{{ "%.2f"|format(total) }}
+                    </strong>
+                </div>
+
+                {% if shipping == 0 %}
+                <div class="alert alert-success small">
+                    <i class="fas fa-check-circle"></i> You're eligible for FREE shipping!
+                </div>
+                {% else %}
+                <div class="alert alert-info small">
+                    <i class="fas fa-info-circle"></i> Add ₹{{ "%.2f"|format(free_shipping_threshold - subtotal) }} more for FREE shipping!
+                </div>
+                {% endif %}
+
+                <a href="{{ url_for('checkout') }}" class="btn btn-success btn-lg w-100">
+                    <i class="fas fa-credit-card"></i> Proceed to Checkout
+                </a>
+            </div>
+        </div>
+
+        <!-- Payment Methods -->
+        <div class="card mt-3">
+            <div class="card-body text-center">
+                <h6 class="mb-3">We Accept</h6>
+                <i class="fab fa-cc-visa fa-2x me-2 text-primary"></i>
+                <i class="fab fa-cc-mastercard fa-2x me-2 text-danger"></i>                
+                <i class="fas fa-university fa-2x text-success"></i>
+            </div>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="text-center py-5">
+    <i class="fas fa-shopping-cart fa-5x text-muted mb-3"></i>
+    <h3>Your cart is empty</h3>
+    <p class="text-muted">Add some products to get started!</p>
+    <a href="{{ url_for('products') }}" class="btn btn-primary btn-lg mt-3">
+        <i class="fas fa-shopping-bag"></i> Shop Now
+    </a>
+</div>
+{% endif %}
+{% endblock %}

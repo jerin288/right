@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}Payment - Right Fit Thrissur{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white text-center">
+                    <h4 class="mb-0"><i class="fas fa-credit-card"></i> Complete Your Payment</h4>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <h5>Order ID: #{{ order.id }}</h5>
+                        <h3 class="text-success">₹{{ "%.2f"|format(order.total_amount) }}</h3>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> You will be redirected to Cashfree payment gateway. 
+                        Please complete the payment to confirm your order.
+                    </div>
+
+                    <!-- Cashfree Payment Container -->
+                    <div id="payment-container"></div>
+
+                    <div class="text-center mt-3">
+                        <a href="{{ url_for('order_confirmation', order_id=order.id) }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Cancel & Go Back
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Cashfree Checkout SDK -->
+<script src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
+
+<script>
+    // Initialize Cashfree
+    const cashfree = Cashfree({
+        mode: "{{ 'production' if cashfree_env == 'PRODUCTION' else 'sandbox' }}"
+    });
+
+    // Payment session ID from backend
+    const paymentSessionId = "{{ payment_session_id }}";
+
+    // Checkout options
+    const checkoutOptions = {
+        paymentSessionId: paymentSessionId,
+        returnUrl: "{{ url_for('payment_callback', _external=True) }}?order_id={{ order.cashfree_order_id }}",
+        redirectTarget: "_self"
+    };
+
+    // Open payment modal
+    cashfree.checkout(checkoutOptions).then((result) => {
+        if (result.error) {
+            console.error("Payment error:", result.error);
+            alert("Payment failed. Please try again.");
+        }
+        if (result.redirect) {
+            console.log("Payment redirecting...");
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block title %}Payment Failed - Right Fit Thrissur{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow border-danger">
+                <div class="card-body text-center py-5">
+                    <div class="mb-4">
+                        <i class="fas fa-times-circle text-danger" style="font-size: 80px;"></i>
+                    </div>
+                    
+                    <h2 class="text-danger mb-3">Payment Transaction Failed</h2>
+                    <p class="lead mb-4">Unfortunately, your online payment could not be processed at this time.</p>
+                    
+                    <!-- Main Error Message -->
+                    <div class="alert alert-danger border-2 border-danger mb-4">
+                        <h5 class="alert-heading">
+                            <i class="fas fa-exclamation-circle"></i> Transaction Not Completed
+                        </h5>
+                        <hr>
+                        <p class="mb-2">
+                            <strong>Don't worry!</strong> Your order has been saved. You have the following options:
+                        </p>
+                        <div class="text-start mt-3">
+                            <p class="mb-2">
+                                <i class="fas fa-redo text-primary"></i> 
+                                <strong>Retry Payment:</strong> You can try the online payment again now or at a later time when convenient.
+                            </p>
+                            <p class="mb-0">
+                                <i class="fas fa-money-bill-wave text-success"></i> 
+                                <strong>Choose Cash on Delivery:</strong> Alternatively, you can pay in cash when your order is delivered to your doorstep.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="card bg-light my-4">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6 mb-2">
+                                    <strong>Order ID:</strong> #{{ order.id }}
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <strong>Amount:</strong> ₹{{ "%.2f"|format(order.total_amount) }}
+                                </div>
+                                <div class="col-12 mt-2">
+                                    <span class="badge bg-danger">Payment Failed</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-warning">
+                        <i class="fas fa-info-circle"></i> 
+                        <strong>Common reasons for payment failure:</strong>
+                        <ul class="text-start mt-2 mb-0 small">
+                            <li>Insufficient account balance</li>
+                            <li>Payment was cancelled by user</li>
+                            <li>Network connectivity issues</li>
+                            <li>Bank declined the transaction</li>
+                            <li>Payment timeout or session expired</li>
+                        </ul>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                        <a href="{{ url_for('initiate_payment', order_id=order.id) }}" class="btn btn-primary btn-lg">
+                            <i class="fas fa-redo"></i> Retry Payment
+                        </a>
+                        <a href="{{ url_for('order_confirmation', order_id=order.id) }}" class="btn btn-outline-secondary btn-lg">
+                            <i class="fas fa-receipt"></i> View Order
+                        </a>
+                        <a href="{{ url_for('index') }}" class="btn btn-outline-primary btn-lg">
+                            <i class="fas fa-home"></i> Go Home
+                        </a>
+                    </div>
+
+                    <div class="mt-4">
+                        <p class="text-muted">
+                            Need help? Contact us at <a href="mailto:rightfit2023@gmail.com">rightfit2023@gmail.com</a> or call +91 8157971886
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

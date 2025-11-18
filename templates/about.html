@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block title %}About Us - Right Fit Thrissur{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Hero Section -->
+    <div class="text-center mb-5">
+        <h1 class="display-4 mb-3">About Right Fit Thrissur</h1>
+        <p class="lead text-muted">Your Trusted Fashion Destination in Thrissur</p>
+    </div>
+
+    <!-- Main Content -->
+    <div class="row mb-5">
+        <div class="col-md-6 mb-4">
+            <img src="{{ url_for('static', filename='images/right fit thrissur .jpg') }}" 
+                 alt="Right Fit Thrissur Store" 
+                 class="img-fluid rounded shadow">
+        </div>
+        <div class="col-md-6">
+            <h2 class="mb-4">Our Story</h2>
+            <p>Welcome to <strong>Right Fit Thrissur</strong>, your premier destination for quality clothing and accessories in Thrissur. We are dedicated to providing our customers with the perfect fit, exceptional style, and unmatched comfort.</p>
+            
+            <p>At Right Fit Thrissur, we believe that everyone deserves to look and feel their best. That's why we carefully curate our collection to offer a wide range of trendy and timeless pieces that cater to all tastes and occasions.</p>
+            
+            <p>From casual wear to formal attire, from everyday essentials to special occasion outfits, we have something for everyone. Our commitment to quality, affordability, and customer satisfaction has made us a trusted name in Thrissur's fashion scene.</p>
+        </div>
+    </div>
+
+    <!-- Mission & Vision -->
+    <div class="row mb-5">
+        <div class="col-md-6 mb-4">
+            <div class="card h-100 border-0 shadow">
+                <div class="card-body p-4">
+                    <div class="text-center mb-3">
+                        <i class="fas fa-bullseye fa-3x text-primary"></i>
+                    </div>
+                    <h3 class="card-title text-center mb-3">Our Mission</h3>
+                    <p class="card-text">To provide high-quality, stylish clothing and accessories that empower our customers to express their unique personalities while ensuring exceptional value and customer service.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 mb-4">
+            <div class="card h-100 border-0 shadow">
+                <div class="card-body p-4">
+                    <div class="text-center mb-3">
+                        <i class="fas fa-eye fa-3x text-primary"></i>
+                    </div>
+                    <h3 class="card-title text-center mb-3">Our Vision</h3>
+                    <p class="card-text">To become Thrissur's most loved fashion brand, known for quality products, exceptional service, and creating memorable shopping experiences both online and in-store.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Why Choose Us -->
+    <div class="mb-5">
+        <h2 class="text-center mb-4">Why Choose Right Fit Thrissur?</h2>
+        <div class="row">
+            <div class="col-md-3 col-sm-6 mb-4">
+                <div class="text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-star fa-3x text-warning"></i>
+                    </div>
+                    <h5>Quality Products</h5>
+                    <p class="text-muted">Carefully selected, premium quality clothing and accessories</p>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6 mb-4">
+                <div class="text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-tag fa-3x text-success"></i>
+                    </div>
+                    <h5>Affordable Prices</h5>
+                    <p class="text-muted">Best value for money with regular offers and discounts</p>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6 mb-4">
+                <div class="text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-shipping-fast fa-3x text-info"></i>
+                    </div>
+                    <h5>Fast Delivery</h5>
+                    <p class="text-muted">Quick and reliable delivery across Thrissur and beyond</p>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6 mb-4">
+                <div class="text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-headset fa-3x text-primary"></i>
+                    </div>
+                    <h5>Customer Support</h5>
+                    <p class="text-muted">Dedicated support team ready to help you</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contact Information -->
+    <div class="card bg-light border-0 shadow">
+        <div class="card-body p-5">
+            <h2 class="text-center mb-4">Get In Touch</h2>
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <div class="text-center">
+                        <i class="fas fa-map-marker-alt fa-2x text-primary mb-3"></i>
+                        <h5>Visit Us</h5>
+                        <p class="text-muted">Right Fit Thrissur<br>Thrissur, Kerala, India</p>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <div class="text-center">
+                        <i class="fas fa-phone fa-2x text-primary mb-3"></i>
+                        <h5>Call Us</h5>
+                        <p class="text-muted">
+                            <a href="tel:+918157971886" class="text-decoration-none">+91 8157971886</a>
+                        </p>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <div class="text-center">
+                        <i class="fas fa-envelope fa-2x text-primary mb-3"></i>
+                        <h5>Email Us</h5>
+                        <p class="text-muted">
+                            <a href="mailto:rightfit2023@gmail.com" class="text-decoration-none">rightfit2023@gmail.com</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="text-center mt-4">
+                <a href="{{ url_for('products') }}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-shopping-bag"></i> Start Shopping
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Developed By -->
+    <div class="text-center mt-5 py-4">
+        <p class="text-muted mb-2">
+            <i class="fas fa-code"></i> Developed with ❤️ by <strong>JD Solutions</strong>
+        </p>
+        <p class="text-muted small">
+            Empowering businesses with innovative digital solutions
+        </p>
+    </div>
+</div>
+{% endblock %}

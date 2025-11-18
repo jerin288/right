@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block title %}My Orders - Right Fit Thrissur{% endblock %}
+
+{% block content %}
+<h1 class="mb-4"><i class="fas fa-box"></i> My Orders</h1>
+
+{% if orders %}
+<div class="row">
+    {% for order in orders %}
+    <div class="col-12 mb-3">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <div>
+                    <strong>Order #{{ order.id }}</strong>
+                    <br>
+                    <small class="text-muted">Placed on {{ order.created_at.strftime('%B %d, %Y') }}</small>
+                </div>
+                <div class="text-end">
+                    {% if order.status == 'Pending' %}
+                        <span class="badge bg-warning">{{ order.status }}</span>
+                    {% elif order.status == 'Processing' %}
+                        <span class="badge bg-info">{{ order.status }}</span>
+                    {% elif order.status == 'Shipped' %}
+                        <span class="badge bg-primary">{{ order.status }}</span>
+                    {% elif order.status == 'Delivered' %}
+                        <span class="badge bg-success">{{ order.status }}</span>
+                    {% elif order.status == 'Cancelled' %}
+                        <span class="badge bg-danger">{{ order.status }}</span>
+                    {% else %}
+                        <span class="badge bg-secondary">{{ order.status }}</span>
+                    {% endif %}
+                    <br>
+                    {% if order.payment_status == 'PAID' %}
+                        <small><span class="badge bg-success mt-1"><i class="fas fa-check"></i> Paid</span></small>
+                    {% elif order.payment_status == 'FAILED' %}
+                        <small><span class="badge bg-danger mt-1"><i class="fas fa-times"></i> Payment Failed</span></small>
+                    {% elif order.payment_status == 'CANCELLED' %}
+                        <small><span class="badge bg-secondary mt-1"><i class="fas fa-ban"></i> Cancelled</span></small>
+                    {% elif order.payment_status == 'REFUND_PENDING' %}
+                        <small><span class="badge bg-warning mt-1"><i class="fas fa-hourglass-half"></i> Refund Pending</span></small>
+                    {% elif order.payment_status == 'REFUNDED' %}
+                        <small><span class="badge bg-info mt-1"><i class="fas fa-undo"></i> Refunded</span></small>
+                    {% else %}
+                        <small><span class="badge bg-warning mt-1"><i class="fas fa-clock"></i> Payment Pending</span></small>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <h6>Items:</h6>
+                        <div class="mb-2">
+                            {% for item in order.items %}
+                            <div class="d-flex align-items-center mb-2">
+                                <img src="{{ item.product.image_url }}" 
+                                     alt="{{ item.product.name }}" 
+                                     style="width: 50px; height: 50px; object-fit: cover;" 
+                                     class="me-3">
+                                <div>
+                                    <strong>{{ item.product.name }}</strong>
+                                    <br>
+                                    <small class="text-muted">
+                                        Qty: {{ item.quantity }} 
+                                        {% if item.size %}| Size: {{ item.size }}{% endif %}
+                                        {% if item.color %}| Color: {{ item.color }}{% endif %}
+                                        | ₹{{ "%.2f"|format(item.price) }}
+                                    </small>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-end">
+                            <h6>Order Total</h6>
+                            <h4 class="price-tag">₹{{ "%.2f"|format(order.total_amount) }}</h4>
+                            <a href="{{ url_for('order_confirmation', order_id=order.id) }}" 
+                               class="btn btn-sm btn-outline-primary mt-2">
+                                View Details
+                            </a>
+                            <a href="{{ url_for('download_invoice', order_id=order.id) }}" 
+                               class="btn btn-sm btn-outline-success mt-2">
+                                <i class="fas fa-download"></i> Invoice
+                            </a>
+                            {% if order.status in ['Pending', 'Processing'] %}
+                            <form action="{{ url_for('cancel_order', order_id=order.id) }}" 
+                                  method="post" 
+                                  class="d-inline"
+                                  onsubmit="return confirm('Are you sure you want to cancel this order?');">
+                                <button type="submit" class="btn btn-sm btn-danger mt-2">
+                                    <i class="fas fa-times"></i> Cancel Order
+                                </button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="text-center py-5">
+    <i class="fas fa-box-open fa-5x text-muted mb-3"></i>
+    <h3>No Orders Yet</h3>
+    <p class="text-muted">You haven't placed any orders yet.</p>
+    <a href="{{ url_for('products') }}" class="btn btn-primary btn-lg mt-3">
+        <i class="fas fa-shopping-bag"></i> Start Shopping
+    </a>
+</div>
+{% endif %}
+{% endblock %}
