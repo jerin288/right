@@ -699,6 +699,49 @@ class Coupon(db.Model):
         return min(discount, subtotal)
 
 
+class SiteSetting(db.Model):
+    """Application-wide settings"""
+    id = db.Column(db.Integer, primary_key=True)
+    setting_key = db.Column(db.String(50), unique=True, nullable=False)
+    setting_value = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.String(200))
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    def __init__(self, **kwargs):
+        super(SiteSetting, self).__init__(**kwargs)
+    
+    @staticmethod
+    def get_setting(key, default='True'):
+        """Get setting value by key"""
+        setting = SiteSetting.query.filter_by(setting_key=key).first()
+        if setting:
+            return setting.setting_value
+        return default
+    
+    @staticmethod
+    def set_setting(key, value, description=None):
+        """Set or update setting value"""
+        setting = SiteSetting.query.filter_by(setting_key=key).first()
+        if setting:
+            setting.setting_value = value
+            setting.updated_at = datetime.utcnow()
+        else:
+            setting = SiteSetting(
+                setting_key=key,
+                setting_value=value,
+                description=description
+            )
+            db.session.add(setting)
+        db.session.commit()
+        return setting
+    
+    @staticmethod
+    def is_cod_enabled():
+        """Check if Cash on Delivery is enabled"""
+        value = SiteSetting.get_setting('cod_enabled', 'True')
+        return value.lower() == 'true'
+
+
 # ==================== LOGIN MANAGER ====================
 
 @login_manager.user_loader
@@ -1111,6 +1154,11 @@ def checkout():
         
         print(f"DEBUG: Payment method from form: {repr(payment_method)}")
         
+        # Check if COD is enabled when customer selects COD
+        if payment_method == 'COD' and not SiteSetting.is_cod_enabled():
+            flash('Cash on Delivery is currently not available. Please choose online payment.', 'danger')
+            return redirect(url_for('checkout'))
+        
         # Validate phone number
         if not validate_phone(phone):
             flash('Invalid phone number. Please enter a valid 10-digit Indian mobile number starting with 6-9.', 'danger')
@@ -1236,12 +1284,14 @@ def checkout():
             return redirect(url_for('order_confirmation', order_id=order.id))
     
     total_amount, subtotal, shipping, _ = calculate_order_total(cart_items)
+    cod_enabled = SiteSetting.is_cod_enabled()
     return render_template('checkout.html', 
                          cart_items=cart_items, 
                          subtotal=subtotal,
                          shipping=shipping,
                          total=total_amount,
-                         free_shipping_threshold=FREE_SHIPPING_THRESHOLD)
+                         free_shipping_threshold=FREE_SHIPPING_THRESHOLD,
+                         cod_enabled=cod_enabled)
 
 
 @app.route('/order/<int:order_id>')
@@ -1791,6 +1841,9 @@ def admin_dashboard():
         func.sum(OrderItem.quantity).desc()
     ).limit(5).all()
     
+    # Get COD enabled status
+    cod_enabled = SiteSetting.is_cod_enabled()
+    
     return render_template('admin/dashboard.html',
                          total_products=total_products,
                          active_products=active_products,
@@ -1802,7 +1855,8 @@ def admin_dashboard():
                          pending_revenue=pending_revenue,
                          low_stock_products=low_stock_products,
                          recent_orders=recent_orders,
-                         top_products=top_products)
+                         top_products=top_products,
+                         cod_enabled=cod_enabled)
 
 
 @app.route('/admin/products')
@@ -2525,6 +2579,29 @@ def admin_toggle_coupon(coupon_id):
     status = 'activated' if coupon.is_active else 'deactivated'
     flash(f'Coupon "{coupon.code}" has been {status}!', 'success')
     return redirect(url_for('admin_coupons'))
+
+
+# ==================== ROUTES - ADMIN SETTINGS ====================
+
+@app.route('/admin/settings/toggle-cod', methods=['POST'])
+@login_required
+def admin_toggle_cod():
+    """Toggle Cash on Delivery payment option"""
+    if not current_user.is_admin:
+        flash('Access denied', 'danger')
+        return redirect(url_for('index'))
+    
+    # Get current status
+    current_status = SiteSetting.is_cod_enabled()
+    
+    # Toggle the status
+    new_status = 'False' if current_status else 'True'
+    SiteSetting.set_setting('cod_enabled', new_status, 'Enable or disable Cash on Delivery payment method')
+    
+    status_text = 'enabled' if new_status == 'True' else 'disabled'
+    flash(f'Cash on Delivery has been {status_text} successfully!', 'success')
+    
+    return redirect(url_for('admin_dashboard'))
 
 
 # ==================== ERROR HANDLERS ====================
