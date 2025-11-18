@@ -179,6 +179,8 @@ def send_email_notification(to_email, subject, html_body, text_body=None):
             print("Email notification disabled or credentials not configured")
             return False
         
+        print(f"Attempting to connect to {MAIL_SERVER}:{MAIL_PORT}")
+        
         msg = MIMEMultipart('alternative')
         msg['From'] = MAIL_DEFAULT_SENDER
         msg['To'] = to_email
@@ -192,14 +194,38 @@ def send_email_notification(to_email, subject, html_body, text_body=None):
         part2 = MIMEText(html_body, 'html')
         msg.attach(part2)
         
-        # Send email with timeout to prevent hanging
-        with smtplib.SMTP(MAIL_SERVER, MAIL_PORT, timeout=10) as server:
+        # Try SMTP with longer timeout and better error handling
+        try:
+            print(f"Creating SMTP connection...")
+            server = smtplib.SMTP(MAIL_SERVER, MAIL_PORT, timeout=30)
+            print(f"Starting TLS...")
             server.starttls()
+            print(f"Logging in as {MAIL_USERNAME}...")
             server.login(MAIL_USERNAME, MAIL_PASSWORD)
+            print(f"Sending message to {to_email}...")
             server.send_message(msg)
-        
-        print(f"Email sent successfully to {to_email}")
-        return True
+            server.quit()
+            print(f"Email sent successfully to {to_email}")
+            return True
+        except smtplib.SMTPAuthenticationError as e:
+            print(f"SMTP Authentication Error: {e}")
+            print("Check: 1) App password is correct 2) 2FA is enabled 3) Less secure app access")
+            return False
+        except smtplib.SMTPException as e:
+            print(f"SMTP Error: {e}")
+            return False
+        except ConnectionRefusedError as e:
+            print(f"Connection Refused: {e}")
+            print("SMTP port 587 may be blocked by hosting provider")
+            return False
+        except TimeoutError as e:
+            print(f"Connection Timeout: {e}")
+            print("Network timeout - SMTP server unreachable")
+            return False
+        except OSError as e:
+            print(f"Network Error: {e}")
+            print("Possible firewall blocking SMTP or network issue")
+            return False
         
     except Exception as e:
         print(f"Error sending email notification: {e}")
