@@ -246,6 +246,9 @@ def generate_order_confirmation_email(order):
     
     payment_method = "Cash on Delivery" if order.payment_method == 'COD' else "Online Payment"
     
+    # Get base URL from environment, remove trailing slash
+    base_url = os.getenv('BASE_URL', 'http://127.0.0.1:5000').rstrip('/')
+    
     html = f"""
     <!DOCTYPE html>
     <html>
@@ -309,7 +312,7 @@ def generate_order_confirmation_email(order):
             </div>
             
             <div style="text-align: center; margin: 30px 0;">
-                <a href="http://127.0.0.1:5000/my_orders" style="background-color: #dc143c; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block;">View Order Status</a>
+                <a href="{base_url}/my_orders" style="background-color: #dc143c; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block;">View Order Status</a>
             </div>
             
             <div style="border-top: 2px solid #ddd; padding-top: 20px; margin-top: 30px; text-align: center; color: #666; font-size: 14px;">
@@ -341,7 +344,7 @@ def generate_order_confirmation_email(order):
     {order.shipping_address}
     Phone: {order.phone}
     
-    Track your order: http://127.0.0.1:5000/my_orders
+    Track your order: {base_url}/my_orders
     
     Need help? Contact us:
     Email: rightfit2023@gmail.com
@@ -397,6 +400,56 @@ def send_sms_notification(order):
             
     except Exception as e:
         print(f"Error sending SMS notification: {e}")
+        return False
+
+def send_customer_sms(phone, message):
+    """Send SMS to customer using Fast2SMS"""
+    try:
+        if not USE_SMS_NOTIFICATION or not SMS_GATEWAY_API_KEY:
+            print("Customer SMS disabled or API key not configured")
+            return False
+        
+        if not validate_phone(phone):
+            print(f"Invalid customer phone: {phone}")
+            return False
+        
+        # Extract last 10 digits
+        clean_phone = re.sub(r'\D', '', phone)[-10:]
+        
+        # Fast2SMS Quick API endpoint
+        url = "https://www.fast2sms.com/dev/bulkV2"
+        
+        payload = {
+            'route': 'q',
+            'message': message,
+            'language': 'english',
+            'flash': 0,
+            'numbers': clean_phone
+        }
+        
+        headers = {
+            'authorization': SMS_GATEWAY_API_KEY,
+            'Content-Type': 'application/json'
+        }
+        
+        response = requests.post(url, json=payload, headers=headers, timeout=15)
+        
+        print(f"Customer SMS API Response: {response.status_code} - {response.text}")
+        
+        if response.status_code == 200:
+            result = response.json()
+            if result.get('return'):
+                print(f"Customer SMS sent successfully to {clean_phone}")
+                return True
+            else:
+                print(f"Customer SMS failed: {result}")
+                return False
+        else:
+            print(f"Customer SMS API error: {response.status_code} - {response.text}")
+            return False
+            
+    except Exception as e:
+        print(f"Error sending customer SMS: {e}")
         return False
 
 def create_cashfree_order(order_id, amount, customer_name, customer_phone, customer_email):
@@ -1334,8 +1387,11 @@ def checkout():
             return redirect(url_for('initiate_payment', order_id=order.id))
         else:
             print(f"DEBUG: COD order #{order.id}, sending notification")
-            # COD - Mark as pending and send notification
-            send_sms_notification(order)
+            # COD - Mark as pending and send notifications
+            send_sms_notification(order)  # Send to admin
+            # Send SMS to customer
+            customer_sms = f"Order #{order.id} placed successfully! Total: Rs.{order.total_amount:.0f}. Track at rightfitthrissur.store - Right Fit Thrissur"
+            send_customer_sms(order.phone, customer_sms)
             flash(f'Order placed successfully! Order ID: {order.id}. Check your email for confirmation.', 'success')
             return redirect(url_for('order_confirmation', order_id=order.id))
     
