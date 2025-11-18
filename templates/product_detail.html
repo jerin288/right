@@ -15,15 +15,16 @@
     <!-- Product Image -->
     <div class="col-md-6 mb-4">
         <div class="card">
+            {% set placeholder_url = 'https://placehold.co/500x500/cccccc/333333?text=' ~ product.name|replace(' ', '+') %}
             {% if product.image_url and product.image_url.strip() %}
             <img src="{{ product.image_url }}" 
                  class="card-img-top" 
                  alt="{{ product.name }}" 
                  style="height: 500px; object-fit: cover;"
-                 onerror="this.onerror=null; this.src='https://via.placeholder.com/500x500/e0e0e0/666666?text={{ product.name|urlencode }}';"
+                 onerror="this.onerror=null; this.src='{{ placeholder_url }}';"
                  loading="lazy">
             {% else %}
-            <img src="https://via.placeholder.com/500x500/e0e0e0/666666?text={{ product.name|urlencode }}" 
+            <img src="{{ placeholder_url }}" 
                  class="card-img-top" 
                  alt="{{ product.name }}" 
                  style="height: 500px; object-fit: cover;"

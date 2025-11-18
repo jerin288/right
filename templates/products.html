@@ -33,14 +33,15 @@
             {% for product in products %}
             <div class="col-md-4 col-sm-6 mb-4">
                 <div class="card product-card">
+                    {% set placeholder_url = 'https://placehold.co/400x400/cccccc/333333?text=' ~ product.name|replace(' ', '+') %}
                     {% if product.image_url and product.image_url.strip() %}
                     <img src="{{ product.image_url }}" 
                          class="card-img-top product-img" 
                          alt="{{ product.name }}"
-                         onerror="this.onerror=null; this.src='https://via.placeholder.com/400x400/e0e0e0/666666?text={{ product.name|urlencode }}';"
+                         onerror="this.onerror=null; this.src='{{ placeholder_url }}';"
                          loading="lazy">
                     {% else %}
-                    <img src="https://via.placeholder.com/400x400/e0e0e0/666666?text={{ product.name|urlencode }}" 
+                    <img src="{{ placeholder_url }}" 
                          class="card-img-top product-img" 
                          alt="{{ product.name }}"
                          loading="lazy">
