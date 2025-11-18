@@ -179,7 +179,11 @@ def send_email_notification(to_email, subject, html_body, text_body=None):
             print("Email notification disabled or credentials not configured")
             return False
         
-        print(f"Attempting to connect to {MAIL_SERVER}:{MAIL_PORT}")
+        # Use port 465 with SSL if TLS is enabled, otherwise use configured port
+        use_ssl = MAIL_USE_TLS and MAIL_PORT == 587
+        smtp_port = 465 if use_ssl else MAIL_PORT
+        
+        print(f"Attempting to connect to {MAIL_SERVER}:{smtp_port} (SSL: {use_ssl})")
         
         msg = MIMEMultipart('alternative')
         msg['From'] = MAIL_DEFAULT_SENDER
@@ -194,41 +198,63 @@ def send_email_notification(to_email, subject, html_body, text_body=None):
         part2 = MIMEText(html_body, 'html')
         msg.attach(part2)
         
-        # Try SMTP with longer timeout and better error handling
+        # Try SMTP with SSL (port 465) or STARTTLS (port 587)
         try:
-            print(f"Creating SMTP connection...")
-            server = smtplib.SMTP(MAIL_SERVER, MAIL_PORT, timeout=30)
-            print(f"Starting TLS...")
-            server.starttls()
-            print(f"Logging in as {MAIL_USERNAME}...")
+            if use_ssl:
+                # Use SMTP_SSL for port 465
+                print(f"Creating SMTP_SSL connection...")
+                server = smtplib.SMTP_SSL(MAIL_SERVER, smtp_port, timeout=30)
+                print(f"Logging in as {MAIL_USERNAME}...")
+            else:
+                # Use regular SMTP with STARTTLS for other ports
+                print(f"Creating SMTP connection...")
+                server = smtplib.SMTP(MAIL_SERVER, smtp_port, timeout=30)
+                print(f"Starting TLS...")
+                server.starttls()
+                print(f"Logging in as {MAIL_USERNAME}...")
+            
             server.login(MAIL_USERNAME, MAIL_PASSWORD)
             print(f"Sending message to {to_email}...")
             server.send_message(msg)
             server.quit()
-            print(f"Email sent successfully to {to_email}")
+            print(f"✅ Email sent successfully to {to_email}")
             return True
+            
         except smtplib.SMTPAuthenticationError as e:
-            print(f"SMTP Authentication Error: {e}")
-            print("Check: 1) App password is correct 2) 2FA is enabled 3) Less secure app access")
+            print(f"❌ SMTP Authentication Error: {e}")
+            print("Check: 1) App password is correct 2) 2FA is enabled")
+            return False
+        except (ConnectionRefusedError, OSError) as e:
+            print(f"❌ Network Error on port {smtp_port}: {e}")
+            if smtp_port == 587:
+                print("Port 587 blocked. Automatically trying port 465 (SSL)...")
+                # Retry with port 465
+                try:
+                    server = smtplib.SMTP_SSL(MAIL_SERVER, 465, timeout=30)
+                    server.login(MAIL_USERNAME, MAIL_PASSWORD)
+                    server.send_message(msg)
+                    server.quit()
+                    print(f"✅ Email sent successfully via port 465 to {to_email}")
+                    return True
+                except Exception as retry_error:
+                    print(f"❌ Port 465 also failed: {retry_error}")
+                    print("⚠️  Render free tier blocks outbound SMTP. Consider:")
+                    print("   1. Upgrade Render plan")
+                    print("   2. Use SendGrid API (free 100 emails/day)")
+                    print("   3. Use alternative email service")
+                    return False
+            else:
+                print("⚠️  SMTP ports blocked by hosting provider")
+                return False
+        except TimeoutError as e:
+            print(f"❌ Connection Timeout: {e}")
             return False
         except smtplib.SMTPException as e:
-            print(f"SMTP Error: {e}")
-            return False
-        except ConnectionRefusedError as e:
-            print(f"Connection Refused: {e}")
-            print("SMTP port 587 may be blocked by hosting provider")
-            return False
-        except TimeoutError as e:
-            print(f"Connection Timeout: {e}")
-            print("Network timeout - SMTP server unreachable")
-            return False
-        except OSError as e:
-            print(f"Network Error: {e}")
-            print("Possible firewall blocking SMTP or network issue")
+            print(f"❌ SMTP Error: {e}")
             return False
         
     except Exception as e:
-        print(f"Error sending email notification: {e}")
+        print(f"❌ Error sending email notification: {e}")
         import traceback
         traceback.print_exc()
         return False
