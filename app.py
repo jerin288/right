@@ -192,8 +192,8 @@ def send_email_notification(to_email, subject, html_body, text_body=None):
         part2 = MIMEText(html_body, 'html')
         msg.attach(part2)
         
-        # Send email
-        with smtplib.SMTP(MAIL_SERVER, MAIL_PORT) as server:
+        # Send email with timeout to prevent hanging
+        with smtplib.SMTP(MAIL_SERVER, MAIL_PORT, timeout=10) as server:
             server.starttls()
             server.login(MAIL_USERNAME, MAIL_PASSWORD)
             server.send_message(msg)
@@ -1368,8 +1368,9 @@ def checkout():
         
         print(f"DEBUG: Order #{order.id} created with payment method: {payment_method}")
         
-        # Send order confirmation email
+        # Send order confirmation email (non-blocking, catch all errors)
         try:
+            print(f"DEBUG: Attempting to send email to {current_user.email}")
             html_body, text_body = generate_order_confirmation_email(order)
             send_email_notification(
                 to_email=current_user.email,
@@ -1377,8 +1378,10 @@ def checkout():
                 html_body=html_body,
                 text_body=text_body
             )
+            print(f"DEBUG: Email send attempt completed")
         except Exception as e:
             print(f"Error sending order confirmation email: {e}")
+            # Don't fail the order if email fails
         
         # Handle payment method
         if payment_method == 'ONLINE':
@@ -1386,12 +1389,20 @@ def checkout():
             # Redirect to payment gateway
             return redirect(url_for('initiate_payment', order_id=order.id))
         else:
-            print(f"DEBUG: COD order #{order.id}, sending notification")
-            # COD - Mark as pending and send notifications
-            send_sms_notification(order)  # Send to admin
-            # Send SMS to customer
-            customer_sms = f"Order #{order.id} placed successfully! Total: Rs.{order.total_amount:.0f}. Track at rightfitthrissur.store - Right Fit Thrissur"
-            send_customer_sms(order.phone, customer_sms)
+            print(f"DEBUG: COD order #{order.id}, sending notifications")
+            # COD - Send notifications (non-blocking, don't fail order if they fail)
+            try:
+                send_sms_notification(order)  # Send to admin
+            except Exception as e:
+                print(f"Error sending admin SMS: {e}")
+            
+            try:
+                # Send SMS to customer
+                customer_sms = f"Order #{order.id} placed successfully! Total: Rs.{order.total_amount:.0f}. Track at rightfitthrissur.store - Right Fit Thrissur"
+                send_customer_sms(order.phone, customer_sms)
+            except Exception as e:
+                print(f"Error sending customer SMS: {e}")
+            
             flash(f'Order placed successfully! Order ID: {order.id}. Check your email for confirmation.', 'success')
             return redirect(url_for('order_confirmation', order_id=order.id))
     
