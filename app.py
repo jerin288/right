@@ -305,11 +305,15 @@ def create_cashfree_order(order_id, amount, customer_name, customer_phone, custo
         
         # Build callback URLs - use request context if available, otherwise use fallback
         try:
-            return_url = url_for('payment_callback', _external=True)
-            notify_url = url_for('payment_webhook', _external=True)
+            # Force HTTPS in production for Cashfree
+            return_url = url_for('payment_callback', _external=True, _scheme='https')
+            notify_url = url_for('payment_webhook', _external=True, _scheme='https')
         except RuntimeError:
             # Fallback URLs when not in request context
             base_url = os.getenv('BASE_URL', 'http://127.0.0.1:5000')
+            # Ensure base_url uses https in production
+            if CASHFREE_ENVIRONMENT == 'PRODUCTION' and base_url.startswith('http://'):
+                base_url = base_url.replace('http://', 'https://')
             return_url = f"{base_url}/payment/callback"
             notify_url = f"{base_url}/payment/webhook"
         
