@@ -1,6 +1,3 @@
-# Environment variables
-.env
-
 # Python
 __pycache__/
 *.py[cod]
@@ -25,8 +22,19 @@ wheels/
 
 # Virtual Environment
 venv/
-env/
 ENV/
+env/
+.venv/
+
+# Environment Variables
+.env
+.env.local
+.env.production
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
 
 # IDEs
 .vscode/
@@ -34,30 +42,23 @@ ENV/
 *.swp
 *.swo
 *~
-
-# Database
-*.db
-*.sqlite
-*.sqlite3
+.DS_Store
 
 # Logs
 *.log
+logs/
 
-# OS Files
-.DS_Store
-Thumbs.db
+# Flask
+instance/
+.webassets-cache
 
-# Uploaded files
-static/uploads/
-
-# Backup files
-*.bak
-backup_*.py
-
-# Test files
+# Testing
 .pytest_cache/
-htmlcov/
 .coverage
+htmlcov/
 
-# Documentation (optional)
-# *.md
+# Uploads (optional - uncomment if you want to ignore uploads)
+# static/uploads/
+
+# Railway
+.railway/
