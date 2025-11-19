@@ -95,7 +95,7 @@ USE_SMS_NOTIFICATION = os.getenv('USE_SMS_NOTIFICATION', 'False').lower() == 'tr
 # Cashfree Payment Gateway Configuration
 CASHFREE_APP_ID = os.getenv('CASHFREE_APP_ID', '')  # x-client-id
 CASHFREE_SECRET_KEY = os.getenv('CASHFREE_SECRET_KEY', '')  # x-client-secret
-CASHFREE_ENVIRONMENT = os.getenv('CASHFREE_ENVIRONMENT', 'SANDBOX')  # SANDBOX or PRODUCTION
+CASHFREE_ENVIRONMENT = os.getenv('CASHFREE_ENVIRONMENT', 'PRODUCTION')  # SANDBOX or PRODUCTION
 CASHFREE_API_VERSION = os.getenv('CASHFREE_API_VERSION', '2023-08-01')
 
 # Initialize Cashfree SDK
