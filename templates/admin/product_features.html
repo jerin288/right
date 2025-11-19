@@ -97,15 +97,16 @@
                                         </span>
                                         <input type="text" class="form-control" name="feature_text" 
                                                value="{{ feature.feature_text }}" maxlength="200" 
-                                               onchange="document.getElementById('edit-form-{{ feature.id }}').submit();">
+                                               onchange="this.form.submit();">
                                     </div>
                                 </form>
                             </div>
                             <div class="col-md-2 text-center">
+                                {% set toggle_url = url_for('admin_toggle_feature', feature_id=feature.id) %}
                                 <div class="form-check form-switch d-inline-block">
                                     <input class="form-check-input" type="checkbox" role="switch" 
                                            {% if feature.is_enabled %}checked{% endif %}
-                                           onchange="window.location.href='{{ url_for('admin_toggle_feature', feature_id=feature.id) }}';"
+                                           onchange="window.location.href='{{ toggle_url }}';"
                                            title="Toggle feature on/off">
                                     <label class="form-check-label small">
                                         {% if feature.is_enabled %}
