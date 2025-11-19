@@ -131,6 +131,15 @@
             z-index: 9999;
             max-width: 400px;
         }
+        
+        /* Override Bootstrap badge colors - change blue to red */
+        .badge.bg-primary {
+            background-color: var(--secondary-color) !important;
+        }
+        
+        .text-primary {
+            color: var(--secondary-color) !important;
+        }
     </style>
     
     {% block extra_css %}{% endblock %}
