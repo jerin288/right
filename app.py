@@ -872,7 +872,15 @@ def product_detail(product_id):
     if not product:
         flash('Product not found', 'danger')
         return redirect(url_for('products'))
-    return render_template('product_detail.html', product=product)
+    
+    # Safely get features (handle missing product_feature table)
+    try:
+        features = product.features
+    except Exception as e:
+        logger.warning(f"Could not load product features: {e}")
+        features = []
+    
+    return render_template('product_detail.html', product=product, features=features)
 
 
 @app.route('/about')

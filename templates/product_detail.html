@@ -112,9 +112,9 @@
         <!-- Product Features -->
         <div class="mt-4">
             <h5>Product Features</h5>
-            {% if product.features %}
+            {% if features %}
             <ul class="list-unstyled">
-                {% for feature in product.features %}
+                {% for feature in features %}
                     {% if feature.is_enabled %}
                     <li><i class="fas fa-check text-success"></i> {{ feature.feature_text }}</li>
                     {% endif %}
