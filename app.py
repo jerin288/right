@@ -754,13 +754,8 @@ with app.app_context():
         # Check if tables exist by trying to query
         db.session.execute(db.text('SELECT 1 FROM product LIMIT 1'))
         print('✅ Database tables already exist')
-    except Exception as e:
-        # Tables don't exist, create them
-        print('🔨 Creating database tables...')
-        db.create_all()
-        print('✅ Database tables created successfully')
         
-        # Create default admin user
+        # Always ensure admin user exists (even if tables already existed)
         try:
             admin = User.query.filter_by(username='admin').first()
             if not admin:
@@ -771,6 +766,22 @@ with app.app_context():
                 print('✅ Admin user created (username: admin, password: admin123)')
             else:
                 print('✅ Admin user already exists')
+        except Exception as admin_error:
+            print(f'⚠️ Admin user check note: {admin_error}')
+            
+    except Exception as e:
+        # Tables don't exist, create them
+        print('🔨 Creating database tables...')
+        db.create_all()
+        print('✅ Database tables created successfully')
+        
+        # Create default admin user
+        try:
+            admin = User(username='admin', email='admin@rightfit.com', is_admin=True)
+            admin.set_password('admin123')
+            db.session.add(admin)
+            db.session.commit()
+            print('✅ Admin user created (username: admin, password: admin123)')
         except Exception as admin_error:
             print(f'⚠️ Admin user creation note: {admin_error}')
 
