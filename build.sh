@@ -9,9 +9,10 @@ pip install -r requirements.txt
 mkdir -p static/uploads/products
 
 # Initialize database tables and admin user
+echo "Initializing database..."
 python -c "from app import app, db, init_db, ensure_admin_user; 
 with app.app_context(): 
     db.create_all(); 
-    print('Database tables created'); 
+    print('✓ Database tables created'); 
     ensure_admin_user(); 
-    print('Admin user ensured')"
+    print('✓ Admin user ensured')"
