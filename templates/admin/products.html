@@ -69,6 +69,10 @@
                                class="btn btn-sm btn-primary mb-1" title="Edit">
                                 <i class="fas fa-edit"></i>
                             </a>
+                            <a href="{{ url_for('admin_product_features', product_id=product.id) }}" 
+                               class="btn btn-sm btn-info mb-1" title="Manage Features">
+                                <i class="fas fa-list-check"></i>
+                            </a>
                             <a href="{{ url_for('admin_toggle_product', product_id=product.id) }}" 
                                class="btn btn-sm btn-{% if product.is_active %}warning{% else %}success{% endif %} mb-1"
                                title="{% if product.is_active %}Deactivate{% else %}Activate{% endif %}">
@@ -82,7 +86,7 @@
                                 </button>
                             </form>
                             <a href="{{ url_for('product_detail', product_id=product.id) }}" 
-                               class="btn btn-sm btn-info mb-1" target="_blank" title="View">
+                               class="btn btn-sm btn-secondary mb-1" target="_blank" title="View">
                                 <i class="fas fa-eye"></i>
                             </a>
                         </td>

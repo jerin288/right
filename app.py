@@ -574,9 +574,29 @@ class Product(db.Model):
         category: 'Category'
         cart_items: 'List[Cart]'
         order_items: 'List[OrderItem]'
+        features: 'List[ProductFeature]'
     
     def __init__(self, **kwargs):
         super(Product, self).__init__(**kwargs)
+
+
+class ProductFeature(db.Model):
+    """Product features with enable/disable toggle"""
+    id = db.Column(db.Integer, primary_key=True)
+    product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False)
+    feature_text = db.Column(db.String(200), nullable=False)
+    is_enabled = db.Column(db.Boolean, default=True)
+    display_order = db.Column(db.Integer, default=0)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relationship
+    if TYPE_CHECKING:
+        product: 'Product'
+    else:
+        product = db.relationship('Product', backref=db.backref('features', lazy=True, order_by='ProductFeature.display_order'))
+    
+    def __init__(self, **kwargs):
+        super(ProductFeature, self).__init__(**kwargs)
 
 
 class Cart(db.Model):
@@ -2136,6 +2156,120 @@ def admin_toggle_product(product_id):
     status = 'activated' if product.is_active else 'deactivated'
     flash(f'Product "{product.name}" has been {status}!', 'success')
     return redirect(url_for('admin_products'))
+
+
+@app.route('/admin/product/<int:product_id>/features', methods=['GET', 'POST'])
+@login_required
+def admin_product_features(product_id):
+    """Manage product features"""
+    if not current_user.is_admin:
+        flash('Access denied', 'danger')
+        return redirect(url_for('index'))
+    
+    product = db.session.get(Product, product_id)
+    if not product:
+        flash('Product not found', 'danger')
+        return redirect(url_for('admin_products'))
+    
+    if request.method == 'POST':
+        feature_text = request.form.get('feature_text', '').strip()
+        
+        if not feature_text:
+            flash('Feature text is required.', 'danger')
+            return redirect(url_for('admin_product_features', product_id=product_id))
+        
+        if len(feature_text) > 200:
+            flash('Feature text must be 200 characters or less.', 'danger')
+            return redirect(url_for('admin_product_features', product_id=product_id))
+        
+        # Get the highest display order and add 1
+        max_order = db.session.query(func.max(ProductFeature.display_order)).filter_by(product_id=product_id).scalar() or 0
+        
+        feature = ProductFeature(
+            product_id=product_id,
+            feature_text=feature_text,
+            display_order=max_order + 1
+        )
+        db.session.add(feature)
+        db.session.commit()
+        
+        flash('Feature added successfully!', 'success')
+        return redirect(url_for('admin_product_features', product_id=product_id))
+    
+    features = ProductFeature.query.filter_by(product_id=product_id).order_by(ProductFeature.display_order).all()
+    return render_template('admin/product_features.html', product=product, features=features)
+
+
+@app.route('/admin/product/feature/edit/<int:feature_id>', methods=['POST'])
+@login_required
+def admin_edit_feature(feature_id):
+    """Edit product feature"""
+    if not current_user.is_admin:
+        flash('Access denied', 'danger')
+        return redirect(url_for('index'))
+    
+    feature = db.session.get(ProductFeature, feature_id)
+    if not feature:
+        flash('Feature not found', 'danger')
+        return redirect(url_for('admin_products'))
+    
+    feature_text = request.form.get('feature_text', '').strip()
+    
+    if not feature_text:
+        flash('Feature text is required.', 'danger')
+        return redirect(url_for('admin_product_features', product_id=feature.product_id))
+    
+    if len(feature_text) > 200:
+        flash('Feature text must be 200 characters or less.', 'danger')
+        return redirect(url_for('admin_product_features', product_id=feature.product_id))
+    
+    feature.feature_text = feature_text
+    db.session.commit()
+    
+    flash('Feature updated successfully!', 'success')
+    return redirect(url_for('admin_product_features', product_id=feature.product_id))
+
+
+@app.route('/admin/product/feature/toggle/<int:feature_id>')
+@login_required
+def admin_toggle_feature(feature_id):
+    """Toggle feature enabled status"""
+    if not current_user.is_admin:
+        flash('Access denied', 'danger')
+        return redirect(url_for('index'))
+    
+    feature = db.session.get(ProductFeature, feature_id)
+    if not feature:
+        flash('Feature not found', 'danger')
+        return redirect(url_for('admin_products'))
+    
+    feature.is_enabled = not feature.is_enabled
+    db.session.commit()
+    
+    status = 'enabled' if feature.is_enabled else 'disabled'
+    flash(f'Feature has been {status}!', 'success')
+    return redirect(url_for('admin_product_features', product_id=feature.product_id))
+
+
+@app.route('/admin/product/feature/delete/<int:feature_id>', methods=['POST'])
+@login_required
+def admin_delete_feature(feature_id):
+    """Delete product feature"""
+    if not current_user.is_admin:
+        flash('Access denied', 'danger')
+        return redirect(url_for('index'))
+    
+    feature = db.session.get(ProductFeature, feature_id)
+    if not feature:
+        flash('Feature not found', 'danger')
+        return redirect(url_for('admin_products'))
+    
+    product_id = feature.product_id
+    db.session.delete(feature)
+    db.session.commit()
+    
+    flash('Feature deleted successfully!', 'success')
+    return redirect(url_for('admin_product_features', product_id=product_id))
 
 
 @app.route('/admin/orders')

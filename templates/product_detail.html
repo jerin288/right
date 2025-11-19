@@ -112,12 +112,22 @@
         <!-- Product Features -->
         <div class="mt-4">
             <h5>Product Features</h5>
+            {% if product.features %}
+            <ul class="list-unstyled">
+                {% for feature in product.features %}
+                    {% if feature.is_enabled %}
+                    <li><i class="fas fa-check text-success"></i> {{ feature.feature_text }}</li>
+                    {% endif %}
+                {% endfor %}
+            </ul>
+            {% else %}
             <ul class="list-unstyled">
                 <li><i class="fas fa-check text-success"></i> Premium Quality Material</li>
                 <li><i class="fas fa-check text-success"></i> Comfortable Fit</li>
                 <li><i class="fas fa-check text-success"></i> Easy to Wash & Maintain</li>
-                <li><i class="fas fa-check text-success"></i> 7-Day Return Policy</li>
+                <li><i class="fas fa-check text-success"></i> 2-Day Return Policy</li>
             </ul>
+            {% endif %}
         </div>
     </div>
 </div>
