@@ -1,6 +1,5 @@
 [build]
 builder = "nixpacks"
-buildCommand = "bash build.sh"
 
 [deploy]
-startCommand = "gunicorn app:app"
+startCommand = "bash build.sh && gunicorn app:app"
