@@ -747,6 +747,28 @@ def load_user(user_id):
     return db.session.get(User, int(user_id))
 
 
+# ==================== AUTO-INITIALIZE DATABASE ====================
+# Initialize database tables on startup (for production deployment)
+with app.app_context():
+    try:
+        # Check if tables exist by trying to query
+        db.session.execute(db.text('SELECT 1 FROM product LIMIT 1'))
+        print('✅ Database tables already exist')
+    except Exception:
+        # Tables don't exist, create them
+        print('🔨 Creating database tables...')
+        db.create_all()
+        print('✅ Database tables created successfully')
+        
+        # Initialize with sample data and admin user
+        try:
+            from app import ensure_admin_user, init_db
+            ensure_admin_user()
+            print('✅ Admin user initialized')
+        except Exception as e:
+            print(f'⚠️ Note: {e}')
+
+
 # ==================== ROUTES - HOME & PRODUCTS ====================
 
 @app.route('/')
