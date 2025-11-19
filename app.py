@@ -1724,10 +1724,15 @@ def payment_callback():
         return redirect(url_for('index'))
 
 
-@app.route('/payment/webhook', methods=['POST'])
+@app.route('/payment/webhook', methods=['POST', 'GET'])
 def payment_webhook():
     """Handle payment webhook from Cashfree for server-side verification"""
     try:
+        # Handle GET request for webhook verification/test
+        if request.method == 'GET':
+            print("Webhook test ping received")
+            return {'status': 'success', 'message': 'Webhook endpoint is active'}, 200
+        
         # Get webhook data
         data = request.get_json()
         
