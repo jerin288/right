@@ -1793,9 +1793,21 @@ def admin_delete_product(product_id):
         flash(f'Product cannot be deleted as it has {order_items_count} order(s). It has been marked as inactive instead.', 'warning')
     else:
         # Safe to delete if no orders reference it
-        db.session.delete(product)
-        db.session.commit()
-        flash('Product deleted successfully!', 'success')
+        try:
+            # First delete associated cart items to prevent foreign key constraint error
+            Cart.query.filter_by(product_id=product_id).delete()
+            
+            # Delete associated product features
+            ProductFeature.query.filter_by(product_id=product_id).delete()
+            
+            # Now delete the product
+            db.session.delete(product)
+            db.session.commit()
+            flash('Product deleted successfully!', 'success')
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"Error deleting product {product_id}: {e}")
+            flash(f'Error deleting product: {str(e)}', 'danger')
     
     return redirect(url_for('admin_products'))
 
