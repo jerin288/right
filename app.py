@@ -2622,4 +2622,6 @@ if __name__ == '__main__':
     print(f"QR Code: {UPI_QR_CODE_PATH}")
     print(f"Debug logging: ENABLED")
     print("="*60)
-    app.run(debug=True, port=5000)
+    port = int(os.environ.get("PORT", 3000))
+    app.run(debug=False, host="0.0.0.0", port=port)
+    
