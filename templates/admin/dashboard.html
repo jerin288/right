@@ -122,17 +122,18 @@
                         <h6 class="mb-1">Cash on Delivery (COD)</h6>
                         <p class="text-muted small mb-0">
                             {% if cod_enabled %}
-                                <span class="badge bg-success">Enabled</span> - Customers can select COD at checkout
+                            <span class="badge bg-success">Enabled</span> - Customers can select COD at checkout
                             {% else %}
-                                <span class="badge bg-danger">Disabled</span> - Only online payment is available
+                            <span class="badge bg-danger">Disabled</span> - Only online payment is available
                             {% endif %}
                         </p>
                     </div>
                     <form action="{{ url_for('admin_toggle_cod') }}" method="post" class="d-inline">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" role="switch" 
-                                   id="codToggle" {{ 'checked' if cod_enabled else '' }}
-                                   onchange="this.form.submit()" style="width: 3em; height: 1.5em; cursor: pointer;">
+                            <input class="form-check-input" type="checkbox" role="switch" id="codToggle" {{ 'checked' if
+                                cod_enabled else '' }} onchange="this.form.submit()"
+                                style="width: 3em; height: 1.5em; cursor: pointer;">
                             <label class="form-check-label ms-2" for="codToggle" style="cursor: pointer;">
                                 {{ 'Enabled' if cod_enabled else 'Disabled' }}
                             </label>
@@ -174,19 +175,19 @@
                                 <td>₹{{ "%.2f"|format(order.total_amount) }}</td>
                                 <td>
                                     {% if order.status == 'Pending' %}
-                                        <span class="badge bg-warning">{{ order.status }}</span>
+                                    <span class="badge bg-warning">{{ order.status }}</span>
                                     {% elif order.status == 'Processing' %}
-                                        <span class="badge bg-info">{{ order.status }}</span>
+                                    <span class="badge bg-info">{{ order.status }}</span>
                                     {% elif order.status == 'Shipped' %}
-                                        <span class="badge bg-primary">{{ order.status }}</span>
+                                    <span class="badge bg-primary">{{ order.status }}</span>
                                     {% elif order.status == 'Delivered' %}
-                                        <span class="badge bg-success">{{ order.status }}</span>
+                                    <span class="badge bg-success">{{ order.status }}</span>
                                     {% endif %}
                                 </td>
                                 <td>{{ order.created_at.strftime('%Y-%m-%d') }}</td>
                                 <td>
-                                    <a href="{{ url_for('order_confirmation', order_id=order.id) }}" 
-                                       class="btn btn-sm btn-outline-primary">
+                                    <a href="{{ url_for('order_confirmation', order_id=order.id) }}"
+                                        class="btn btn-sm btn-outline-primary">
                                         View
                                     </a>
                                 </td>

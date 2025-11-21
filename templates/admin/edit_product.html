@@ -14,30 +14,32 @@
     <div class="col-md-8 mx-auto">
         <div class="card">
             <div class="card-body">
-                <form action="{{ url_for('admin_edit_product', product_id=product.id) }}" method="post" enctype="multipart/form-data">
+                <form action="{{ url_for('admin_edit_product', product_id=product.id) }}" method="post"
+                    enctype="multipart/form-data">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="mb-3">
                         <label for="name" class="form-label">Product Name *</label>
-                        <input type="text" class="form-control" id="name" name="name" 
-                               value="{{ product.name }}" required>
+                        <input type="text" class="form-control" id="name" name="name" value="{{ product.name }}"
+                            required>
                     </div>
 
                     <div class="mb-3">
                         <label for="description" class="form-label">Description *</label>
-                        <textarea class="form-control" id="description" name="description" 
-                                  rows="4" required>{{ product.description }}</textarea>
+                        <textarea class="form-control" id="description" name="description" rows="4"
+                            required>{{ product.description }}</textarea>
                     </div>
 
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label for="price" class="form-label">Price (₹) *</label>
-                            <input type="number" class="form-control" id="price" name="price" 
-                                   step="0.01" min="0" value="{{ product.price }}" required>
+                            <input type="number" class="form-control" id="price" name="price" step="0.01" min="0"
+                                value="{{ product.price }}" required>
                         </div>
 
                         <div class="col-md-6 mb-3">
                             <label for="stock" class="form-label">Stock Quantity *</label>
-                            <input type="number" class="form-control" id="stock" name="stock" 
-                                   min="0" value="{{ product.stock }}" required>
+                            <input type="number" class="form-control" id="stock" name="stock" min="0"
+                                value="{{ product.stock }}" required>
                         </div>
                     </div>
 
@@ -45,8 +47,8 @@
                         <label for="category_id" class="form-label">Category *</label>
                         <select class="form-select" id="category_id" name="category_id" required>
                             {% for category in categories %}
-                            <option value="{{ category.id }}" 
-                                    {% if category.id == product.category_id %}selected{% endif %}>
+                            <option value="{{ category.id }}" {% if category.id==product.category_id %}selected{% endif
+                                %}>
                                 {{ category.name }}
                             </option>
                             {% endfor %}
@@ -55,43 +57,43 @@
 
                     <div class="mb-3">
                         <label for="image_file" class="form-label">Update Product Image</label>
-                        <input type="file" class="form-control" id="image_file" name="image_file" 
-                               accept="image/*">
-                        <small class="text-muted">Upload new image (PNG, JPG, JPEG, GIF, WEBP - Max 16MB) or leave empty to keep current</small>
+                        <input type="file" class="form-control" id="image_file" name="image_file" accept="image/*">
+                        <small class="text-muted">Upload new image (PNG, JPG, JPEG, GIF, WEBP - Max 16MB) or leave empty
+                            to keep current</small>
                     </div>
-                    
+
                     <div class="mb-3">
                         <label class="form-label">Current Image:</label><br>
-                        <img src="{{ product.image_url }}" alt="{{ product.name }}" 
-                             style="max-width: 200px; margin-top: 10px; border-radius: 5px;">
+                        <img src="{{ product.image_url }}" alt="{{ product.name }}"
+                            style="max-width: 200px; margin-top: 10px; border-radius: 5px;">
                     </div>
-                    
+
                     <div class="mb-3">
                         <label for="image_url" class="form-label">Or Image URL (Optional)</label>
-                        <input type="url" class="form-control" id="image_url" name="image_url" 
-                               value="{{ product.image_url }}" placeholder="https://example.com/image.jpg">
+                        <input type="url" class="form-control" id="image_url" name="image_url"
+                            value="{{ product.image_url }}" placeholder="https://example.com/image.jpg">
                         <small class="text-muted">Use file upload above or update URL</small>
                     </div>
 
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label for="sizes" class="form-label">Available Sizes</label>
-                            <input type="text" class="form-control" id="sizes" name="sizes" 
-                                   value="{{ product.sizes or '' }}">
+                            <input type="text" class="form-control" id="sizes" name="sizes"
+                                value="{{ product.sizes or '' }}">
                             <small class="text-muted">Comma-separated values</small>
                         </div>
 
                         <div class="col-md-6 mb-3">
                             <label for="colors" class="form-label">Available Colors</label>
-                            <input type="text" class="form-control" id="colors" name="colors" 
-                                   value="{{ product.colors or '' }}">
+                            <input type="text" class="form-control" id="colors" name="colors"
+                                value="{{ product.colors or '' }}">
                             <small class="text-muted">Comma-separated values</small>
                         </div>
                     </div>
 
                     <div class="mb-3 form-check">
-                        <input type="checkbox" class="form-check-input" id="is_active" 
-                               name="is_active" {% if product.is_active %}checked{% endif %}>
+                        <input type="checkbox" class="form-check-input" id="is_active" name="is_active" {% if
+                            product.is_active %}checked{% endif %}>
                         <label class="form-check-label" for="is_active">
                             Product is active (visible to customers)
                         </label>

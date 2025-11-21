@@ -7,7 +7,9 @@ from flask import Flask, render_template, request, redirect, url_for, flash, ses
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
+from flask_wtf.csrf import CSRFProtect, CSRFError
 from datetime import datetime, timedelta
 import os
 import requests
@@ -60,6 +62,7 @@ if database_url.startswith('postgres://'):
     database_url = database_url.replace('postgres://', 'postgresql://', 1)
 app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+csrf = CSRFProtect(app)
 app.config['UPLOAD_FOLDER'] = os.path.join('static', 'uploads', 'products')
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 
@@ -77,8 +80,11 @@ SHIPPING_CHARGE = 100.00
 
 # SMS Gateway Configuration (Free SMS notification)
 ADMIN_PHONE_NUMBER = os.getenv('ADMIN_PHONE_NUMBER', '7510556919')  # Admin phone number for SMS (without country code)
-SMS_GATEWAY_API_KEY = os.getenv('SMS_GATEWAY_API_KEY', 'gBNScrPYJ1xaoQ5ZOpeEFsUbKjfXiT0W3utVvh6GRHCILqn4DwWwfeaEFkbJL1QPK6zRBySViD9chr7C')  # Fast2SMS API Key
+SMS_GATEWAY_API_KEY = os.getenv('SMS_GATEWAY_API_KEY')  # Fast2SMS API Key
 USE_SMS_NOTIFICATION = os.getenv('USE_SMS_NOTIFICATION', 'False').lower() == 'true'  # Set to True to enable SMS notifications (requires ₹100 credit)
+
+if not SMS_GATEWAY_API_KEY and USE_SMS_NOTIFICATION:
+    print("⚠️  WARNING: SMS_GATEWAY_API_KEY not set. SMS notifications will fail.")
 
 # Email Configuration - DISABLED
 # Email notification functionality has been removed from the application
@@ -1072,8 +1078,11 @@ def checkout():
         
         # Create order items and update stock atomically
         for cart_item in cart_items:
+            # Lock the product row for update to prevent race conditions
+            product = db.session.query(Product).with_for_update().get(cart_item.product_id)
+            
             # Double-check stock availability before deducting
-            if cart_item.product.stock < cart_item.quantity:
+            if not product or product.stock < cart_item.quantity:
                 db.session.rollback()
                 flash(f'Stock changed for {cart_item.product.name}. Please review your cart.', 'danger')
                 return redirect(url_for('view_cart'))
@@ -1082,14 +1091,14 @@ def checkout():
                 order_id=order.id,
                 product_id=cart_item.product_id,
                 quantity=cart_item.quantity,
-                price=cart_item.product.price,
+                price=product.price,
                 size=cart_item.size,
                 color=cart_item.color
             )
             db.session.add(order_item)
             
             # Update product stock
-            cart_item.product.stock -= cart_item.quantity
+            product.stock -= cart_item.quantity
         
         # Clear cart
         Cart.query.filter_by(user_id=current_user.id).delete()
@@ -1646,6 +1655,10 @@ def admin_add_product():
         
         # Handle image upload with better validation
         image_url = request.form.get('image_url', '')  # Keep URL as fallback
+        if image_url and not image_url.startswith(('http://', 'https://', '/static/')):
+             flash('Invalid image URL. Must start with http://, https://, or /static/', 'danger')
+             return redirect(url_for('admin_add_product'))
+
         if 'image_file' in request.files:
             file = request.files['image_file']
             print(f"DEBUG: File received: {file.filename}")
@@ -2486,6 +2499,11 @@ def internal_server_error(e):
 def forbidden(e):
     """Handle 403 errors"""
     return render_template('errors/403.html'), 403
+
+@app.errorhandler(CSRFError)
+def handle_csrf_error(e):
+    """Handle CSRF errors"""
+    return render_template('errors/403.html', description=e.description), 403
 
 @app.errorhandler(413)
 def request_entity_too_large(e):

@@ -29,11 +29,10 @@
                             <tr>
                                 <td>
                                     <div class="d-flex align-items-center">
-                                        <img src="{{ item.product.image_url if item.product.image_url else 'https://via.placeholder.com/60x60?text=No+Image' }}" 
-                                             alt="{{ item.product.name }}" 
-                                             style="width: 60px; height: 60px; object-fit: cover;" 
-                                             class="me-3"
-                                             onerror="this.onerror=null; this.src='https://via.placeholder.com/60x60?text=?';">
+                                        <img src="{{ item.product.image_url if item.product.image_url else 'https://via.placeholder.com/60x60?text=No+Image' }}"
+                                            alt="{{ item.product.name }}"
+                                            style="width: 60px; height: 60px; object-fit: cover;" class="me-3"
+                                            onerror="this.onerror=null; this.src='https://via.placeholder.com/60x60?text=?';">
                                         <div>
                                             <strong>{{ item.product.name }}</strong><br>
                                             <small class="text-muted">{{ item.product.category.name }}</small>
@@ -44,18 +43,19 @@
                                 <td>{{ item.color or 'N/A' }}</td>
                                 <td>₹{{ "%.2f"|format(item.product.price) }}</td>
                                 <td>
-                                    <form action="{{ url_for('update_cart', cart_id=item.id) }}" method="post" class="d-inline">
-                                        <input type="number" name="quantity" value="{{ item.quantity }}" 
-                                               min="1" max="{{ item.product.stock }}" 
-                                               style="width: 60px;" class="form-control form-control-sm d-inline"
-                                               onchange="this.form.submit()">
+                                    <form action="{{ url_for('update_cart', cart_id=item.id) }}" method="post"
+                                        class="d-inline">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <input type="number" name="quantity" value="{{ item.quantity }}" min="1"
+                                            max="{{ item.product.stock }}" style="width: 60px;"
+                                            class="form-control form-control-sm d-inline" onchange="this.form.submit()">
                                     </form>
                                 </td>
                                 <td><strong>₹{{ "%.2f"|format(item.product.price * item.quantity) }}</strong></td>
                                 <td>
-                                    <a href="{{ url_for('remove_from_cart', cart_id=item.id) }}" 
-                                       class="btn btn-sm btn-danger"
-                                       onclick="return confirm('Remove this item from cart?')">
+                                    <a href="{{ url_for('remove_from_cart', cart_id=item.id) }}"
+                                        class="btn btn-sm btn-danger"
+                                        onclick="return confirm('Remove this item from cart?')">
                                         <i class="fas fa-trash"></i>
                                     </a>
                                 </td>
@@ -89,9 +89,9 @@
                     <span>Shipping:</span>
                     <strong>
                         {% if shipping == 0 %}
-                            <span class="text-success">FREE</span>
+                        <span class="text-success">FREE</span>
                         {% else %}
-                            ₹{{ "%.2f"|format(shipping) }}
+                        ₹{{ "%.2f"|format(shipping) }}
                         {% endif %}
                     </strong>
                 </div>
@@ -109,7 +109,8 @@
                 </div>
                 {% else %}
                 <div class="alert alert-info small">
-                    <i class="fas fa-info-circle"></i> Add ₹{{ "%.2f"|format(free_shipping_threshold - subtotal) }} more for FREE shipping!
+                    <i class="fas fa-info-circle"></i> Add ₹{{ "%.2f"|format(free_shipping_threshold - subtotal) }} more
+                    for FREE shipping!
                 </div>
                 {% endif %}
 

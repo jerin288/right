@@ -15,20 +15,15 @@
     <!-- Product Image -->
     <div class="col-md-6 mb-4">
         <div class="card">
-            {% set placeholder_url = 'https://placehold.co/500x500/cccccc/333333?text=' ~ product.name|replace(' ', '+') %}
+            {% set placeholder_url = 'https://placehold.co/500x500/cccccc/333333?text=' ~ product.name|replace(' ', '+')
+            %}
             {% if product.image_url and product.image_url.strip() %}
-            <img src="{{ product.image_url }}" 
-                 class="card-img-top" 
-                 alt="{{ product.name }}" 
-                 style="height: 500px; object-fit: cover;"
-                 onerror="this.onerror=null; this.src='{{ placeholder_url }}';"
-                 loading="lazy">
+            <img src="{{ product.image_url }}" class="card-img-top" alt="{{ product.name }}"
+                style="height: 500px; object-fit: cover;" onerror="this.onerror=null; this.src='{{ placeholder_url }}';"
+                loading="lazy">
             {% else %}
-            <img src="{{ placeholder_url }}" 
-                 class="card-img-top" 
-                 alt="{{ product.name }}" 
-                 style="height: 500px; object-fit: cover;"
-                 loading="lazy">
+            <img src="{{ placeholder_url }}" class="card-img-top" alt="{{ product.name }}"
+                style="height: 500px; object-fit: cover;" loading="lazy">
             {% endif %}
         </div>
     </div>
@@ -36,13 +31,13 @@
     <!-- Product Details -->
     <div class="col-md-6">
         <h1 class="mb-3">{{ product.name }}</h1>
-        
+
         <div class="mb-3">
             <span class="badge bg-secondary">{{ product.category.name }}</span>
         </div>
-        
+
         <h2 class="price-tag mb-4">₹{{ "%.2f"|format(product.price) }}</h2>
-        
+
         <div class="mb-4">
             <h5>Product Description</h5>
             <p class="text-muted">{{ product.description }}</p>
@@ -51,19 +46,20 @@
         <!-- Stock Status -->
         <div class="mb-3">
             {% if product.stock > 0 %}
-                <span class="badge bg-success">
-                    <i class="fas fa-check-circle"></i> In Stock ({{ product.stock }} available)
-                </span>
+            <span class="badge bg-success">
+                <i class="fas fa-check-circle"></i> In Stock ({{ product.stock }} available)
+            </span>
             {% else %}
-                <span class="badge bg-danger">
-                    <i class="fas fa-times-circle"></i> Out of Stock
-                </span>
+            <span class="badge bg-danger">
+                <i class="fas fa-times-circle"></i> Out of Stock
+            </span>
             {% endif %}
         </div>
 
         <!-- Add to Cart Form -->
         {% if product.stock > 0 %}
         <form action="{{ url_for('add_to_cart', product_id=product.id) }}" method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <!-- Size Selection -->
             {% if product.sizes %}
             <div class="mb-3">
@@ -83,7 +79,8 @@
                 <label class="form-label"><strong>Select Color:</strong></label>
                 <div class="btn-group" role="group">
                     {% for color in product.colors.split(',') %}
-                    <input type="radio" class="btn-check" name="color" id="color-{{ color }}" value="{{ color }}" required>
+                    <input type="radio" class="btn-check" name="color" id="color-{{ color }}" value="{{ color }}"
+                        required>
                     <label class="btn btn-outline-secondary" for="color-{{ color }}">{{ color }}</label>
                     {% endfor %}
                 </div>
@@ -93,18 +90,18 @@
             <!-- Quantity Selection -->
             <div class="mb-3">
                 <label for="quantity" class="form-label"><strong>Quantity:</strong></label>
-                <input type="number" class="form-control" id="quantity" name="quantity" 
-                       value="1" min="1" max="{{ product.stock }}" style="width: 100px;" required>
+                <input type="number" class="form-control" id="quantity" name="quantity" value="1" min="1"
+                    max="{{ product.stock }}" style="width: 100px;" required>
             </div>
 
             {% if current_user.is_authenticated %}
-                <button type="submit" class="btn btn-primary btn-lg w-100">
-                    <i class="fas fa-shopping-cart"></i> Add to Cart
-                </button>
+            <button type="submit" class="btn btn-primary btn-lg w-100">
+                <i class="fas fa-shopping-cart"></i> Add to Cart
+            </button>
             {% else %}
-                <a href="{{ url_for('login') }}" class="btn btn-primary btn-lg w-100">
-                    <i class="fas fa-sign-in-alt"></i> Login to Purchase
-                </a>
+            <a href="{{ url_for('login') }}" class="btn btn-primary btn-lg w-100">
+                <i class="fas fa-sign-in-alt"></i> Login to Purchase
+            </a>
             {% endif %}
         </form>
         {% endif %}
@@ -115,9 +112,9 @@
             {% if features %}
             <ul class="list-unstyled">
                 {% for feature in features %}
-                    {% if feature.is_enabled %}
-                    <li><i class="fas fa-check text-success"></i> {{ feature.feature_text }}</li>
-                    {% endif %}
+                {% if feature.is_enabled %}
+                <li><i class="fas fa-check text-success"></i> {{ feature.feature_text }}</li>
+                {% endif %}
                 {% endfor %}
             </ul>
             {% else %}

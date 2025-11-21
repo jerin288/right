@@ -37,10 +37,9 @@
                     <tr>
                         <td>{{ product.id }}</td>
                         <td>
-                            <img src="{{ product.image_url if product.image_url else 'https://via.placeholder.com/50x50?text=No+Image' }}" 
-                                 alt="{{ product.name }}" 
-                                 style="width: 50px; height: 50px; object-fit: cover;"
-                                 onerror="this.onerror=null; this.src='https://via.placeholder.com/50x50?text=?';">
+                            <img src="{{ product.image_url if product.image_url else 'https://via.placeholder.com/50x50?text=No+Image' }}"
+                                alt="{{ product.name }}" style="width: 50px; height: 50px; object-fit: cover;"
+                                onerror="this.onerror=null; this.src='https://via.placeholder.com/50x50?text=?';">
                         </td>
                         <td>
                             <strong>{{ product.name }}</strong><br>
@@ -50,43 +49,45 @@
                         <td><strong>₹{{ "%.2f"|format(product.price) }}</strong></td>
                         <td>
                             {% if product.stock > 10 %}
-                                <span class="badge bg-success">{{ product.stock }}</span>
+                            <span class="badge bg-success">{{ product.stock }}</span>
                             {% elif product.stock > 0 %}
-                                <span class="badge bg-warning">{{ product.stock }}</span>
+                            <span class="badge bg-warning">{{ product.stock }}</span>
                             {% else %}
-                                <span class="badge bg-danger">Out of Stock</span>
+                            <span class="badge bg-danger">Out of Stock</span>
                             {% endif %}
                         </td>
                         <td>
                             {% if product.is_active %}
-                                <span class="badge bg-success">Active</span>
+                            <span class="badge bg-success">Active</span>
                             {% else %}
-                                <span class="badge bg-secondary">Inactive</span>
+                            <span class="badge bg-secondary">Inactive</span>
                             {% endif %}
                         </td>
                         <td>
-                            <a href="{{ url_for('admin_edit_product', product_id=product.id) }}" 
-                               class="btn btn-sm btn-primary mb-1" title="Edit">
+                            <a href="{{ url_for('admin_edit_product', product_id=product.id) }}"
+                                class="btn btn-sm btn-primary mb-1" title="Edit">
                                 <i class="fas fa-edit"></i>
                             </a>
-                            <a href="{{ url_for('admin_product_features', product_id=product.id) }}" 
-                               class="btn btn-sm btn-info mb-1" title="Manage Features">
+                            <a href="{{ url_for('admin_product_features', product_id=product.id) }}"
+                                class="btn btn-sm btn-info mb-1" title="Manage Features">
                                 <i class="fas fa-list-check"></i>
                             </a>
-                            <a href="{{ url_for('admin_toggle_product', product_id=product.id) }}" 
-                               class="btn btn-sm btn-{% if product.is_active %}warning{% else %}success{% endif %} mb-1"
-                               title="{% if product.is_active %}Deactivate{% else %}Activate{% endif %}">
-                                <i class="fas fa-{% if product.is_active %}toggle-off{% else %}toggle-on{% endif %}"></i>
+                            <a href="{{ url_for('admin_toggle_product', product_id=product.id) }}"
+                                class="btn btn-sm btn-{% if product.is_active %}warning{% else %}success{% endif %} mb-1"
+                                title="{% if product.is_active %}Deactivate{% else %}Activate{% endif %}">
+                                <i
+                                    class="fas fa-{% if product.is_active %}toggle-off{% else %}toggle-on{% endif %}"></i>
                             </a>
-                            <form action="{{ url_for('admin_delete_product', product_id=product.id) }}" 
-                                  method="post" class="d-inline"
-                                  onsubmit="return confirm('Are you sure you want to delete this product? Note: If it has orders, it will be marked as inactive instead.');">
+                            <form action="{{ url_for('admin_delete_product', product_id=product.id) }}" method="post"
+                                class="d-inline"
+                                onsubmit="return confirm('Are you sure you want to delete this product? Note: If it has orders, it will be marked as inactive instead.');">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <button type="submit" class="btn btn-sm btn-danger mb-1" title="Delete">
                                     <i class="fas fa-trash"></i>
                                 </button>
                             </form>
-                            <a href="{{ url_for('product_detail', product_id=product.id) }}" 
-                               class="btn btn-sm btn-secondary mb-1" target="_blank" title="View">
+                            <a href="{{ url_for('product_detail', product_id=product.id) }}"
+                                class="btn btn-sm btn-secondary mb-1" target="_blank" title="View">
                                 <i class="fas fa-eye"></i>
                             </a>
                         </td>

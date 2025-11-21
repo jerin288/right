@@ -17,18 +17,21 @@
                     </div>
 
                     <div class="alert alert-info">
-                        <i class="fas fa-info-circle"></i> Scan the QR code below using any UPI app to complete your payment.
+                        <i class="fas fa-info-circle"></i> Scan the QR code below using any UPI app to complete your
+                        payment.
                     </div>
 
                     <!-- UPI Payment Container -->
                     <div class="text-center mb-4">
                         <div class="border p-3 bg-white d-inline-block rounded">
-                            <img src="{{ url_for('static', filename=qr_code_path) }}" alt="UPI QR Code" class="img-fluid" style="max-width: 300px;">
+                            <img src="{{ url_for('static', filename=qr_code_path) }}" alt="UPI QR Code"
+                                class="img-fluid" style="max-width: 300px;">
                         </div>
                         <div class="mt-3">
                             <p class="mb-1"><strong>UPI ID:</strong> <code>{{ upi_id }}</code></p>
                             <p class="mb-1"><strong>Payee Name:</strong> {{ upi_payee_name }}</p>
-                            <p class="mb-0"><strong>Amount:</strong> <span class="text-success">₹{{ "%.2f"|format(order.total_amount) }}</span></p>
+                            <p class="mb-0"><strong>Amount:</strong> <span class="text-success">₹{{
+                                    "%.2f"|format(order.total_amount) }}</span></p>
                         </div>
                     </div>
 
@@ -56,12 +59,14 @@
                         <div class="card-body">
                             <p>After completing the payment, please enter your UPI transaction ID below:</p>
                             <form action="{{ url_for('confirm_payment', order_id=order.id) }}" method="post">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <div class="mb-3">
                                     <label for="transaction_id" class="form-label">UPI Transaction ID *</label>
-                                    <input type="text" class="form-control" id="transaction_id" name="transaction_id" 
-                                           placeholder="Enter your 12-digit transaction ID" required
-                                           pattern="[0-9]{12}" maxlength="12">
-                                    <small class="text-muted">You can find this in your UPI app's transaction history</small>
+                                    <input type="text" class="form-control" id="transaction_id" name="transaction_id"
+                                        placeholder="Enter your 12-digit transaction ID" required pattern="[0-9]{12}"
+                                        maxlength="12">
+                                    <small class="text-muted">You can find this in your UPI app's transaction
+                                        history</small>
                                 </div>
                                 <button type="submit" class="btn btn-success w-100">
                                     <i class="fas fa-paper-plane"></i> Submit Payment Details
@@ -71,8 +76,9 @@
                     </div>
 
                     <div class="alert alert-warning">
-                        <i class="fas fa-exclamation-triangle"></i> 
-                        <strong>Important:</strong> Your order will be confirmed once we verify your payment. This usually takes 5-10 minutes.
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>Important:</strong> Your order will be confirmed once we verify your payment. This
+                        usually takes 5-10 minutes.
                     </div>
 
                     <div class="text-center mt-3">

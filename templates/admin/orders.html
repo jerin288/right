@@ -37,26 +37,26 @@
                         <td><strong>₹{{ "%.2f"|format(order.total_amount) }}</strong></td>
                         <td>
                             {% if order.payment_method == 'COD' %}
-                                <span class="badge bg-success"><i class="fas fa-money-bill"></i> COD</span>
+                            <span class="badge bg-success"><i class="fas fa-money-bill"></i> COD</span>
                             {% else %}
-                                <span class="badge bg-info"><i class="fas fa-qrcode"></i> UPI</span>
+                            <span class="badge bg-info"><i class="fas fa-qrcode"></i> UPI</span>
                             {% endif %}
                             <br>
                             {% if order.payment_status == 'PAID' %}
-                                <small><span class="badge bg-success mt-1">Paid</span></small>
+                            <small><span class="badge bg-success mt-1">Paid</span></small>
                             {% elif order.payment_status == 'FAILED' %}
-                                <small><span class="badge bg-danger mt-1">Failed</span></small>
+                            <small><span class="badge bg-danger mt-1">Failed</span></small>
                             {% elif order.payment_status == 'CANCELLED' %}
-                                <small><span class="badge bg-secondary mt-1">Cancelled</span></small>
+                            <small><span class="badge bg-secondary mt-1">Cancelled</span></small>
                             {% elif order.payment_status == 'REFUND_PENDING' %}
-                                <small><span class="badge bg-warning mt-1">Refund Pending</span></small>
+                            <small><span class="badge bg-warning mt-1">Refund Pending</span></small>
                             {% elif order.payment_status == 'REFUNDED' %}
-                                <small><span class="badge bg-info mt-1">Refunded</span></small>
+                            <small><span class="badge bg-info mt-1">Refunded</span></small>
                             {% else %}
-                                <small><span class="badge bg-warning mt-1">Pending</span></small>
+                            <small><span class="badge bg-warning mt-1">Pending</span></small>
                             {% endif %}
                             {% if order.payment_id %}
-                                <br><small class="text-muted">TXN: {{ order.payment_id }}</small>
+                            <br><small class="text-muted">TXN: {{ order.payment_id }}</small>
                             {% endif %}
                         </td>
                         <td>
@@ -76,9 +76,8 @@
                         </td>
                         <td>{{ order.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
                         <td>
-                            <button class="btn btn-sm btn-outline-info" type="button" 
-                                    data-bs-toggle="collapse" 
-                                    data-bs-target="#items-{{ order.id }}">
+                            <button class="btn btn-sm btn-outline-info" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#items-{{ order.id }}">
                                 <i class="fas fa-list"></i> View Items ({{ order.items|length }})
                             </button>
                         </td>
@@ -87,59 +86,68 @@
                         </td>
                         <td>{{ order.phone }}</td>
                         <td>
-                            <form action="{{ url_for('admin_update_order', order_id=order.id) }}" 
-                                  method="post" class="d-inline" id="status-form-{{ order.id }}">
+                            <form action="{{ url_for('admin_update_order', order_id=order.id) }}" method="post"
+                                class="d-inline" id="status-form-{{ order.id }}">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <div class="input-group input-group-sm" style="max-width: 200px;">
-                                    <select name="status" class="form-select form-select-sm" 
-                                            onchange="this.form.submit()" 
-                                            title="Change status (auto-submits)">
-                                        <option value="Pending" {% if order.status == 'Pending' %}selected{% endif %}>Pending</option>
-                                        <option value="Processing" {% if order.status == 'Processing' %}selected{% endif %}>Processing</option>
-                                        <option value="Shipped" {% if order.status == 'Shipped' %}selected{% endif %}>Shipped</option>
-                                        <option value="Delivered" {% if order.status == 'Delivered' %}selected{% endif %}>Delivered</option>
-                                        <option value="Cancelled" {% if order.status == 'Cancelled' %}selected{% endif %}>Cancelled</option>
+                                    <select name="status" class="form-select form-select-sm"
+                                        onchange="this.form.submit()" title="Change status (auto-submits)">
+                                        <option value="Pending" {% if order.status=='Pending' %}selected{% endif %}>
+                                            Pending</option>
+                                        <option value="Processing" {% if order.status=='Processing' %}selected{% endif
+                                            %}>Processing</option>
+                                        <option value="Shipped" {% if order.status=='Shipped' %}selected{% endif %}>
+                                            Shipped</option>
+                                        <option value="Delivered" {% if order.status=='Delivered' %}selected{% endif %}>
+                                            Delivered</option>
+                                        <option value="Cancelled" {% if order.status=='Cancelled' %}selected{% endif %}>
+                                            Cancelled</option>
                                     </select>
                                     <button type="submit" class="btn btn-sm btn-outline-primary" title="Update status">
                                         <i class="fas fa-check"></i>
                                     </button>
                                 </div>
                             </form>
-                            {% if order.payment_method == 'COD' and order.status == 'Delivered' and order.payment_status == 'PENDING' %}
-                                <small class="text-muted d-block mt-1">
-                                    <i class="fas fa-info-circle"></i> Will mark COD as paid
-                                </small>
+                            {% if order.payment_method == 'COD' and order.status == 'Delivered' and order.payment_status
+                            == 'PENDING' %}
+                            <small class="text-muted d-block mt-1">
+                                <i class="fas fa-info-circle"></i> Will mark COD as paid
+                            </small>
                             {% endif %}
                             <br>
                             {% if order.payment_status == 'PENDING' and order.payment_method != 'COD' %}
-                            <form action="{{ url_for('admin_verify_payment', order_id=order.id) }}" 
-                                  method="post" class="d-inline" 
-                                  onsubmit="return confirm('Verify UPI payment for order #{{ order.id }}? Make sure you have received the payment.');
+                            <form action="{{ url_for('admin_verify_payment', order_id=order.id) }}" method="post"
+                                class="d-inline" onsubmit="return confirm('Verify UPI payment for order #{{ order.id }}? Make sure you have received the payment.');
 ">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <button type="submit" class="btn btn-sm btn-success mt-1">
                                     <i class="fas fa-check-circle"></i> Verify Payment
                                 </button>
                             </form>
                             {% endif %}
                             {% if order.payment_status == 'PAID' and order.status != 'Cancelled' %}
-                            <form action="{{ url_for('admin_cancel_paid_order', order_id=order.id) }}" 
-                                  method="post" class="d-inline" 
-                                  onsubmit="return confirm('Cancel PAID order #{{ order.id }}? This will mark refund as pending. You must process refund manually via UPI!');">
+                            <form action="{{ url_for('admin_cancel_paid_order', order_id=order.id) }}" method="post"
+                                class="d-inline"
+                                onsubmit="return confirm('Cancel PAID order #{{ order.id }}? This will mark refund as pending. You must process refund manually via UPI!');">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <button type="submit" class="btn btn-sm btn-warning mt-1">
                                     <i class="fas fa-undo"></i> Cancel & Refund
                                 </button>
                             </form>
                             {% elif order.payment_status == 'REFUND_PENDING' %}
-                            <form action="{{ url_for('admin_mark_refunded', order_id=order.id) }}" 
-                                  method="post" class="d-inline" 
-                                  onsubmit="return confirm('Confirm that refund has been processed via Cashfree for order #{{ order.id }}?');">
+                            <form action="{{ url_for('admin_mark_refunded', order_id=order.id) }}" method="post"
+                                class="d-inline"
+                                onsubmit="return confirm('Confirm that refund has been processed via Cashfree for order #{{ order.id }}?');">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <button type="submit" class="btn btn-sm btn-success mt-1">
                                     <i class="fas fa-check"></i> Mark Refunded
                                 </button>
                             </form>
                             {% endif %}
-                            <form action="{{ url_for('admin_delete_order', order_id=order.id) }}" 
-                                  method="post" class="d-inline" 
-                                  onsubmit="return confirm('Are you sure you want to delete order #{{ order.id }}? This action cannot be undone!');">
+                            <form action="{{ url_for('admin_delete_order', order_id=order.id) }}" method="post"
+                                class="d-inline"
+                                onsubmit="return confirm('Are you sure you want to delete order #{{ order.id }}? This action cannot be undone!');">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <button type="submit" class="btn btn-sm btn-danger mt-1">
                                     <i class="fas fa-trash"></i> Delete
                                 </button>

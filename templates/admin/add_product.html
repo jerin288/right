@@ -15,29 +15,30 @@
         <div class="card">
             <div class="card-body">
                 <form action="{{ url_for('admin_add_product') }}" method="post" enctype="multipart/form-data">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="mb-3">
                         <label for="name" class="form-label">Product Name *</label>
-                        <input type="text" class="form-control" id="name" name="name" 
-                               placeholder="e.g., Classic White T-Shirt" required>
+                        <input type="text" class="form-control" id="name" name="name"
+                            placeholder="e.g., Classic White T-Shirt" required>
                     </div>
 
                     <div class="mb-3">
                         <label for="description" class="form-label">Description *</label>
-                        <textarea class="form-control" id="description" name="description" 
-                                  rows="4" placeholder="Detailed product description" required></textarea>
+                        <textarea class="form-control" id="description" name="description" rows="4"
+                            placeholder="Detailed product description" required></textarea>
                     </div>
 
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label for="price" class="form-label">Price (₹) *</label>
-                            <input type="number" class="form-control" id="price" name="price" 
-                                   step="0.01" min="0" placeholder="499.00" required>
+                            <input type="number" class="form-control" id="price" name="price" step="0.01" min="0"
+                                placeholder="499.00" required>
                         </div>
 
                         <div class="col-md-6 mb-3">
                             <label for="stock" class="form-label">Stock Quantity *</label>
-                            <input type="number" class="form-control" id="stock" name="stock" 
-                                   min="0" placeholder="50" required>
+                            <input type="number" class="form-control" id="stock" name="stock" min="0" placeholder="50"
+                                required>
                         </div>
                     </div>
 
@@ -53,37 +54,34 @@
 
                     <div class="mb-3">
                         <label for="image_file" class="form-label">Product Image</label>
-                        <input type="file" class="form-control" id="image_file" name="image_file" 
-                               accept="image/*">
+                        <input type="file" class="form-control" id="image_file" name="image_file" accept="image/*">
                         <small class="text-muted">Upload product image (PNG, JPG, JPEG, GIF, WEBP - Max 16MB)</small>
                     </div>
-                    
+
                     <div class="mb-3">
                         <label for="image_url" class="form-label">Or Image URL (Optional)</label>
-                        <input type="url" class="form-control" id="image_url" name="image_url" 
-                               placeholder="https://example.com/image.jpg">
+                        <input type="url" class="form-control" id="image_url" name="image_url"
+                            placeholder="https://example.com/image.jpg">
                         <small class="text-muted">Use file upload above or enter image URL as fallback</small>
                     </div>
 
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label for="sizes" class="form-label">Available Sizes</label>
-                            <input type="text" class="form-control" id="sizes" name="sizes" 
-                                   placeholder="S,M,L,XL,XXL">
+                            <input type="text" class="form-control" id="sizes" name="sizes" placeholder="S,M,L,XL,XXL">
                             <small class="text-muted">Comma-separated values</small>
                         </div>
 
                         <div class="col-md-6 mb-3">
                             <label for="colors" class="form-label">Available Colors</label>
-                            <input type="text" class="form-control" id="colors" name="colors" 
-                                   placeholder="Red,Blue,Black">
+                            <input type="text" class="form-control" id="colors" name="colors"
+                                placeholder="Red,Blue,Black">
                             <small class="text-muted">Comma-separated values</small>
                         </div>
                     </div>
 
                     <div class="mb-3 form-check">
-                        <input type="checkbox" class="form-check-input" id="is_active" 
-                               name="is_active" checked>
+                        <input type="checkbox" class="form-check-input" id="is_active" name="is_active" checked>
                         <label class="form-check-label" for="is_active">
                             Product is active (visible to customers)
                         </label>

@@ -13,6 +13,6 @@ psycopg2-binary==2.9.9
 # Uncomment to enable specific features:
 
 # Flask-Mail==0.9.1           # For email notifications
-# Flask-WTF==1.2.1            # For CSRF protection
+Flask-WTF==1.2.1            # For CSRF protection
 # Flask-Limiter==3.5.0        # For rate limiting
 # email-validator==2.1.0      # For advanced email validation
