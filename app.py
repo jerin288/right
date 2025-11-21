@@ -50,6 +50,8 @@ load_dotenv()
 
 # Initialize Flask app
 app = Flask(__name__)
+# Configure for reverse proxy (Railway)
+app.config['PREFERRED_URL_SCHEME'] = 'https'
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'your-secret-key-change-in-production')
 # Database configuration with psycopg2 support
 database_url = os.getenv('DATABASE_URL', 'sqlite:///ecommerce.db')
