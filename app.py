@@ -416,10 +416,9 @@ class Order(db.Model):
     status = db.Column(db.String(20), default='Pending')  # Pending, Processing, Shipped, Delivered, Cancelled
     shipping_address = db.Column(db.Text, nullable=False)
     phone = db.Column(db.String(15), nullable=False)
-    payment_method = db.Column(db.String(20), default='COD')  # COD, ONLINE
+    payment_method = db.Column(db.String(20), default='COD')  # COD, UPI
     payment_status = db.Column(db.String(20), default='PENDING')  # PENDING, PAID, FAILED, CANCELLED, REFUND_PENDING, REFUNDED
-    payment_id = db.Column(db.String(100))  # Cashfree transaction ID
-    cashfree_order_id = db.Column(db.String(100))  # Cashfree order ID
+    payment_id = db.Column(db.String(100))  # UPI transaction ID
     refund_note = db.Column(db.Text)  # Note for refund requests
     coupon_code = db.Column(db.String(50))  # Applied coupon code
     coupon_discount = db.Column(db.Float, default=0)  # Discount amount from coupon
