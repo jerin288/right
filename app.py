@@ -43,11 +43,7 @@ logger = logging.getLogger(__name__)
 if TYPE_CHECKING:
     from typing import List
 
-# Cashfree Payment Gateway SDK
-from cashfree_pg.models.create_order_request import CreateOrderRequest
-from cashfree_pg.api_client import Cashfree
-from cashfree_pg.models.customer_details import CustomerDetails
-from cashfree_pg.models.order_meta import OrderMeta
+# UPI Payment System - No external SDK required
 
 # Load environment variables
 load_dotenv()
@@ -92,24 +88,14 @@ USE_SMS_NOTIFICATION = os.getenv('USE_SMS_NOTIFICATION', 'False').lower() == 'tr
 # MAIL_DEFAULT_SENDER = os.getenv('MAIL_DEFAULT_SENDER', MAIL_USERNAME)
 # USE_EMAIL_NOTIFICATION = os.getenv('USE_EMAIL_NOTIFICATION', 'False').lower() == 'true'
 
-# Cashfree Payment Gateway Configuration
-CASHFREE_APP_ID = os.getenv('CASHFREE_APP_ID', '')  # x-client-id
-CASHFREE_SECRET_KEY = os.getenv('CASHFREE_SECRET_KEY', '')  # x-client-secret
-CASHFREE_ENVIRONMENT = os.getenv('CASHFREE_ENVIRONMENT', 'PRODUCTION')  # SANDBOX or PRODUCTION
-CASHFREE_API_VERSION = os.getenv('CASHFREE_API_VERSION', '2023-08-01')
-
-# Initialize Cashfree SDK
-if CASHFREE_APP_ID and CASHFREE_SECRET_KEY:
-    Cashfree.XClientId = CASHFREE_APP_ID  # pyright: ignore[reportAttributeAccessIssue]
-    Cashfree.XClientSecret = CASHFREE_SECRET_KEY  # pyright: ignore[reportAttributeAccessIssue]
-    Cashfree.XEnvironment = Cashfree.SANDBOX if CASHFREE_ENVIRONMENT == 'SANDBOX' else Cashfree.PRODUCTION  # pyright: ignore[reportAttributeAccessIssue]
+# UPI Payment Configuration
+UPI_ID = os.getenv('UPI_ID', '8157971886-1@okbizaxis')  # Your UPI ID
+UPI_PAYEE_NAME = os.getenv('UPI_PAYEE_NAME', 'Right Fit Thrissur')  # Payee name
+UPI_QR_CODE_PATH = 'images/QR .png'  # Path to QR code in static folder
 
 # Security Warning for Production
 if not os.getenv('SECRET_KEY') or os.getenv('SECRET_KEY') == 'your-secret-key-change-in-production':
     print("⚠️  WARNING: Using default SECRET_KEY. Set a secure key in production!")
-
-if CASHFREE_ENVIRONMENT == 'PRODUCTION' and (not CASHFREE_APP_ID or not CASHFREE_SECRET_KEY):
-    print("❌ ERROR: Production Cashfree credentials not configured!")
 
 # Create upload folder if it doesn't exist
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
@@ -279,206 +265,6 @@ def send_customer_sms(phone, message):
         print(f"Error sending customer SMS: {e}")
         return False
 
-def create_cashfree_order(order_id, amount, customer_name, customer_phone, customer_email):
-    """Create Cashfree payment order"""
-    try:
-        if not CASHFREE_APP_ID or not CASHFREE_SECRET_KEY:
-            print("ERROR: Cashfree credentials not configured")
-            return None
-        
-        # Cashfree API endpoint
-        if CASHFREE_ENVIRONMENT == 'PRODUCTION':
-            url = "https://api.cashfree.com/pg/orders"
-        else:
-            url = "https://sandbox.cashfree.com/pg/orders"
-        
-        # Generate unique order ID for Cashfree
-        cashfree_order_id = f"ORDER_{order_id}_{int(datetime.now().timestamp())}"
-        
-        # Ensure phone number has country code for Cashfree
-        if not customer_phone.startswith('+'):
-            # Add +91 for Indian numbers if not present
-            if customer_phone.startswith('91'):
-                customer_phone = f'+{customer_phone}'
-            else:
-                customer_phone = f'+91{customer_phone}'
-        
-        # Build callback URLs - use request context if available, otherwise use fallback
-        try:
-            # Force HTTPS in production for Cashfree
-            return_url = url_for('payment_callback', _external=True, _scheme='https')
-            notify_url = url_for('payment_webhook', _external=True, _scheme='https')
-        except RuntimeError:
-            # Fallback URLs when not in request context
-            base_url = os.getenv('BASE_URL', 'http://127.0.0.1:5000')
-            # Ensure base_url uses https in production
-            if CASHFREE_ENVIRONMENT == 'PRODUCTION' and base_url.startswith('http://'):
-                base_url = base_url.replace('http://', 'https://')
-            return_url = f"{base_url}/payment/callback"
-            notify_url = f"{base_url}/payment/webhook"
-        
-        payload = {
-            "order_id": cashfree_order_id,
-            "order_amount": float(amount),
-            "order_currency": "INR",
-            "customer_details": {
-                "customer_id": f"CUST_{order_id}",
-                "customer_name": customer_name,
-                "customer_email": customer_email,
-                "customer_phone": customer_phone
-            },
-            "order_meta": {
-                "return_url": return_url,
-                "notify_url": notify_url
-            }
-        }
-        
-        headers = {
-            'x-client-id': CASHFREE_APP_ID,
-            'x-client-secret': CASHFREE_SECRET_KEY,
-            'x-api-version': CASHFREE_API_VERSION,
-            'Content-Type': 'application/json'
-        }
-        
-        print(f"Cashfree Order Request - Order ID: {cashfree_order_id}, Amount: ₹{amount}")
-        response = requests.post(url, json=payload, headers=headers, timeout=30)
-        
-        print(f"Cashfree API Response: {response.status_code} - {response.text}")
-        
-        if response.status_code in [200, 201]:
-            result = response.json()
-            if 'payment_session_id' in result:
-                return {
-                    'order_id': cashfree_order_id,
-                    'payment_session_id': result.get('payment_session_id'),
-                    'order_status': result.get('order_status')
-                }
-            else:
-                print(f"ERROR: payment_session_id not in response: {result}")
-                return None
-        else:
-            print(f"Cashfree API error: {response.status_code} - {response.text}")
-            return None
-            
-    except requests.exceptions.Timeout:
-        print(f"ERROR: Cashfree API request timeout")
-        return None
-    except requests.exceptions.RequestException as e:
-        print(f"ERROR: Cashfree API request failed: {e}")
-        return None
-    except Exception as e:
-        print(f"ERROR: Unexpected error creating Cashfree order: {e}")
-        return None
-
-def verify_cashfree_payment(order_id):
-    """Verify payment status from Cashfree"""
-    try:
-        if not CASHFREE_APP_ID or not CASHFREE_SECRET_KEY:
-            print("ERROR: Cashfree credentials not configured for verification")
-            return None
-        
-        # Cashfree API endpoint
-        if CASHFREE_ENVIRONMENT == 'PRODUCTION':
-            url = f"https://api.cashfree.com/pg/orders/{order_id}"
-        else:
-            url = f"https://sandbox.cashfree.com/pg/orders/{order_id}"
-        
-        headers = {
-            'x-client-id': CASHFREE_APP_ID,
-            'x-client-secret': CASHFREE_SECRET_KEY,
-            'x-api-version': CASHFREE_API_VERSION
-        }
-        
-        print(f"Verifying payment for Cashfree Order ID: {order_id}")
-        response = requests.get(url, headers=headers, timeout=30)
-        
-        print(f"Cashfree Verification Response: {response.status_code} - {response.text}")
-        
-        if response.status_code == 200:
-            return response.json()
-        else:
-            print(f"ERROR: Cashfree verification failed: {response.status_code} - {response.text}")
-            return None
-            
-    except requests.exceptions.Timeout:
-        print(f"ERROR: Cashfree verification timeout for order {order_id}")
-        return None
-    except requests.exceptions.RequestException as e:
-        print(f"ERROR: Cashfree verification request failed: {e}")
-        return None
-    except Exception as e:
-        print(f"ERROR: Unexpected error verifying Cashfree payment: {e}")
-        return None
-
-def process_cashfree_refund(order):
-    """Process refund via Cashfree API"""
-    try:
-        if not CASHFREE_APP_ID or not CASHFREE_SECRET_KEY:
-            print("ERROR: Cashfree credentials not configured")
-            return {'success': False, 'error': 'Cashfree credentials not configured'}
-        
-        if not order.payment_id:
-            return {'success': False, 'error': 'Payment ID not found'}
-        
-        # Cashfree Refund API endpoint
-        if CASHFREE_ENVIRONMENT == 'PRODUCTION':
-            url = f"https://api.cashfree.com/pg/orders/{order.cashfree_order_id}/refunds"
-        else:
-            url = f"https://sandbox.cashfree.com/pg/orders/{order.cashfree_order_id}/refunds"
-        
-        # Generate unique refund ID
-        refund_id = f"REFUND_{order.id}_{int(datetime.now().timestamp())}"
-        
-        payload = {
-            "refund_id": refund_id,
-            "refund_amount": float(order.total_amount),
-            "refund_note": f"Order #{order.id} cancelled by admin"
-        }
-        
-        headers = {
-            'x-client-id': CASHFREE_APP_ID,
-            'x-client-secret': CASHFREE_SECRET_KEY,
-            'x-api-version': CASHFREE_API_VERSION,
-            'Content-Type': 'application/json'
-        }
-        
-        print(f"Cashfree Refund Request - Order: {order.cashfree_order_id}, Amount: ₹{order.total_amount}")
-        response = requests.post(url, json=payload, headers=headers, timeout=30)
-        
-        print(f"Cashfree Refund Response: {response.status_code} - {response.text}")
-        
-        if response.status_code in [200, 201]:
-            result = response.json()
-            # Check if refund was successful
-            if result.get('cf_refund_id') or result.get('refund_id'):
-                return {
-                    'success': True,
-                    'refund_id': result.get('cf_refund_id') or result.get('refund_id'),
-                    'status': result.get('refund_status', 'PENDING')
-                }
-            else:
-                return {'success': False, 'error': f"Refund response missing refund ID: {result}"}
-        else:
-            error_msg = response.text
-            try:
-                error_data = response.json()
-                error_msg = error_data.get('message', error_msg)
-            except:
-                pass
-            return {'success': False, 'error': f"API Error ({response.status_code}): {error_msg}"}
-            
-    except requests.exceptions.Timeout:
-        print(f"ERROR: Cashfree refund request timeout")
-        return {'success': False, 'error': 'Request timeout - please try again'}
-    except requests.exceptions.RequestException as e:
-        print(f"ERROR: Cashfree refund request failed: {e}")
-        return {'success': False, 'error': f'Network error: {str(e)}'}
-    except Exception as e:
-        print(f"ERROR: Unexpected error processing refund: {e}")
-        import traceback
-        traceback.print_exc()
-        return {'success': False, 'error': f'Unexpected error: {str(e)}'}
-
 # Initialize extensions
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)
@@ -508,7 +294,8 @@ def log_response_info(response):
 def inject_config():
     return {
         'config': {
-            'CASHFREE_ENVIRONMENT': CASHFREE_ENVIRONMENT
+            'UPI_ENABLED': True,
+            'UPI_PAYEE_NAME': UPI_PAYEE_NAME
         }
     }
 
@@ -1331,8 +1118,8 @@ def checkout():
         
         # Handle payment method
         if payment_method == 'ONLINE':
-            print(f"DEBUG: Redirecting to payment initiation for order #{order.id}")
-            # Redirect to payment gateway
+            print(f"DEBUG: Redirecting to UPI payment for order #{order.id}")
+            # Redirect to UPI payment
             return redirect(url_for('initiate_payment', order_id=order.id))
         else:
             print(f"DEBUG: COD order #{order.id}, sending notifications")
@@ -1590,7 +1377,7 @@ def download_invoice(order_id):
 @app.route('/payment/initiate/<int:order_id>')
 @login_required
 def initiate_payment(order_id):
-    """Initiate Cashfree payment"""
+    """Initiate UPI payment"""
     # Prevent admin from initiating payment
     if current_user.is_admin:
         flash('Admin accounts cannot make payments. Please use a customer account.', 'warning')
@@ -1614,221 +1401,87 @@ def initiate_payment(order_id):
         flash('This order has been cancelled.', 'warning')
         return redirect(url_for('my_orders'))
     
-    # Check Cashfree credentials
-    if not CASHFREE_APP_ID or not CASHFREE_SECRET_KEY:
-        print("ERROR: Cashfree credentials not configured")
-        flash('Payment gateway not configured. Please contact support or choose Cash on Delivery.', 'danger')
-        return redirect(url_for('order_confirmation', order_id=order.id))
+    print(f"DEBUG: Initiating UPI payment for Order #{order.id}")
     
-    # Create Cashfree order
-    print(f"DEBUG: Attempting to create Cashfree order for Order #{order.id}")
-    print(f"DEBUG: Cashfree credentials present: APP_ID={bool(CASHFREE_APP_ID)}, SECRET={bool(CASHFREE_SECRET_KEY)}")
-    print(f"DEBUG: Environment: {CASHFREE_ENVIRONMENT}")
-    
-    cashfree_response = create_cashfree_order(
-        order_id=order.id,
-        amount=order.total_amount,
-        customer_name=current_user.username,
-        customer_phone=order.phone,
-        customer_email=current_user.email
-    )
-    
-    print(f"DEBUG: Cashfree response received: {cashfree_response}")
-    
-    if cashfree_response and cashfree_response.get('payment_session_id'):
-        # Save Cashfree order details
-        order.cashfree_order_id = cashfree_response['order_id']
-        db.session.commit()
-        
-        print(f"SUCCESS: Payment session created for order {order.id}")
-        
-        # Render payment page with Cashfree session
-        return render_template('payment.html', 
-                             order=order,
-                             payment_session_id=cashfree_response['payment_session_id'],
-                             cashfree_env=CASHFREE_ENVIRONMENT)
-    else:
-        print(f"ERROR: Failed to create payment session for order {order.id}")
-        flash('Payment gateway error. Please try again later or choose Cash on Delivery.', 'danger')
-        return redirect(url_for('order_confirmation', order_id=order.id))
+    # Render UPI payment page with QR code
+    return render_template('payment.html', 
+                         order=order,
+                         upi_id=UPI_ID,
+                         upi_payee_name=UPI_PAYEE_NAME,
+                         qr_code_path=UPI_QR_CODE_PATH)
 
+@app.route('/payment/verify/<int:order_id>', methods=['POST'])
+@login_required
+def verify_payment(order_id):
+    """Verify UPI payment (admin marks as paid after verification)"""
+    order = db.session.get(Order, order_id)
+    if not order:
+        return {'status': 'error', 'message': 'Order not found'}, 404
+    
+    if order.user_id != current_user.id:
+        return {'status': 'error', 'message': 'Unauthorized access'}, 403
+    
+    # Return current payment status
+    return {
+        'status': 'success',
+        'payment_status': order.payment_status,
+        'order_status': order.status,
+        'message': 'Payment status retrieved successfully'
+    }, 200
 
-@app.route('/payment/callback', methods=['GET', 'POST'])
-def payment_callback():
-    """Handle payment callback from Cashfree"""
-    try:
-        # Get order_id from query params
-        cashfree_order_id = request.args.get('order_id')
-        
-        print(f"Payment callback received for order: {cashfree_order_id}")
-        print(f"Callback params: {request.args}")
-        
-        if not cashfree_order_id:
-            print("ERROR: No order_id in callback")
-            flash('Invalid payment response - missing order ID', 'danger')
-            return redirect(url_for('index'))
-        
-        # Extract our order ID from Cashfree order ID (ORDER_123_timestamp)
-        try:
-            parts = cashfree_order_id.split('_')
-            if len(parts) >= 3:  # ORDER_123_timestamp format
-                our_order_id = parts[1]
-            else:
-                print(f"ERROR: Invalid order ID format: {cashfree_order_id}")
-                flash('Invalid order ID format', 'danger')
-                return redirect(url_for('index'))
-        except (IndexError, ValueError) as e:
-            print(f"ERROR: Error parsing order ID: {e}")
-            flash('Error parsing order ID', 'danger')
-            return redirect(url_for('index'))
-        
-        try:
-            order = db.session.get(Order, int(our_order_id))
-        except ValueError as e:
-            print(f"ERROR: Invalid order ID value: {e}")
-            flash('Invalid order ID', 'danger')
-            return redirect(url_for('index'))
-        
-        if not order:
-            print(f"ERROR: Order not found: {our_order_id}")
-            flash('Order not found', 'danger')
-            return redirect(url_for('index'))
-        
-        # Verify payment with Cashfree
-        payment_info = verify_cashfree_payment(cashfree_order_id)
-        
-        if not payment_info:
-            print(f"ERROR: Failed to verify payment for order {our_order_id}")
-            order.payment_status = 'FAILED'
-            db.session.commit()
-            flash('Payment verification failed. Please contact support.', 'danger')
-            return redirect(url_for('payment_failed', order_id=order.id))
-        
-        # Check payment status - Cashfree uses different fields
-        payment_status = payment_info.get('order_status')
-        print(f"Payment status from Cashfree: {payment_status}")
-        print(f"Full payment info: {payment_info}")
-        
-        if payment_status == 'PAID':
-            # Payment successful
-            print(f"SUCCESS: Payment completed for order {our_order_id}")
-            order.payment_status = 'PAID'
-            order.payment_id = payment_info.get('cf_order_id', cashfree_order_id)
-            db.session.commit()
-            
-            # Send SMS notification to admin
-            send_sms_notification(order)
-            
-            # Email notifications have been disabled
-            # try:
-            #     html_body, text_body = generate_order_confirmation_email(order)
-            #     send_email_notification(
-            #         to_email=order.user.email,
-            #         subject=f"Payment Successful - Order #{order.id} | Right Fit Thrissur",
-            #         html_body=html_body,
-            #         text_body=text_body
-            #     )
-            # except Exception as e:
-            #     print(f"Error sending payment confirmation email: {e}")
-            
-            flash(f'Payment successful! Order ID: {order.id}. You will receive SMS updates.', 'success')
-            return redirect(url_for('payment_success', order_id=order.id))
-        elif payment_status == 'ACTIVE':
-            # Payment is pending/in progress
-            print(f"INFO: Payment still active for order {our_order_id}")
-            flash('Payment is being processed. Please wait...', 'info')
-            return redirect(url_for('order_confirmation', order_id=order.id))
-        else:
-            # Payment failed or cancelled
-            print(f"FAILED: Payment status {payment_status} for order {our_order_id}")
-            order.payment_status = 'FAILED'
-            db.session.commit()
-            
-            error_details = payment_info.get('payment_message', 'Payment was not completed')
-            flash(f'Payment failed: {error_details}', 'danger')
-            return redirect(url_for('payment_failed', order_id=order.id))
-            
-    except Exception as e:
-        print(f"ERROR: Payment callback exception: {e}")
-        import traceback
-        traceback.print_exc()
-        flash('Payment verification error. Please contact support.', 'danger')
+@app.route('/payment/confirm/<int:order_id>', methods=['POST'])
+@login_required
+def confirm_payment(order_id):
+    """Customer confirms payment completion"""
+    order = db.session.get(Order, order_id)
+    if not order:
+        flash('Order not found', 'danger')
         return redirect(url_for('index'))
-
-
-@app.route('/payment/webhook', methods=['POST', 'GET'])
-def payment_webhook():
-    """Handle payment webhook from Cashfree for server-side verification"""
+    
+    if order.user_id != current_user.id:
+        flash('Unauthorized access', 'danger')
+        return redirect(url_for('index'))
+    
+    # Get transaction details from form
+    transaction_id = request.form.get('transaction_id', '').strip()
+    
+    if not transaction_id:
+        flash('Please provide the UPI transaction ID.', 'danger')
+        return redirect(url_for('initiate_payment', order_id=order.id))
+    
+    # Update order with transaction details
+    order.payment_id = transaction_id
+    order.payment_status = 'PENDING'  # Admin will verify and mark as PAID
+    db.session.commit()
+    
+    # Send notification to admin
     try:
-        # Handle GET request for webhook verification/test
-        if request.method == 'GET':
-            print("Webhook test ping received")
-            return {'status': 'success', 'message': 'Webhook endpoint is active'}, 200
-        
-        # Get webhook data
-        data = request.get_json()
-        
-        print(f"Webhook received: {data}")
-        
-        if not data:
-            print("ERROR: Empty webhook data")
-            return {'status': 'error', 'message': 'No data received'}, 400
-        
-        # Extract webhook information
-        event_type = data.get('type')
-        order_data = data.get('data', {})
-        order_info = order_data.get('order', {})
-        
-        cashfree_order_id = order_info.get('order_id')
-        order_status = order_info.get('order_status')
-        
-        print(f"Webhook - Event: {event_type}, Order: {cashfree_order_id}, Status: {order_status}")
-        
-        if not cashfree_order_id:
-            print("ERROR: No order_id in webhook")
-            return {'status': 'error', 'message': 'Missing order_id'}, 400
-        
-        # Extract our internal order ID from Cashfree order ID
-        try:
-            parts = cashfree_order_id.split('_')
-            if len(parts) >= 3:
-                our_order_id = int(parts[1])
-            else:
-                print(f"ERROR: Invalid webhook order ID format: {cashfree_order_id}")
-                return {'status': 'error', 'message': 'Invalid order format'}, 400
-        except (IndexError, ValueError) as e:
-            print(f"ERROR: Failed to parse webhook order ID: {e}")
-            return {'status': 'error', 'message': 'Order ID parsing error'}, 400
-        
-        # Find the order in database
-        order = db.session.get(Order, our_order_id)
-        if not order:
-            print(f"ERROR: Order {our_order_id} not found for webhook")
-            return {'status': 'error', 'message': 'Order not found'}, 404
-        
-        # Update order based on webhook event
-        if event_type == 'PAYMENT_SUCCESS_WEBHOOK' and order_status == 'PAID':
-            print(f"SUCCESS: Webhook confirmed payment for order {our_order_id}")
-            order.payment_status = 'PAID'
-            order.payment_id = order_info.get('cf_order_id', cashfree_order_id)
-            db.session.commit()
-            
-            # Send notification if not already sent
-            send_sms_notification(order)
-        elif event_type == 'PAYMENT_FAILED_WEBHOOK':
-            print(f"FAILED: Webhook confirmed payment failure for order {our_order_id}")
-            order.payment_status = 'FAILED'
-            db.session.commit()
-        else:
-            print(f"INFO: Webhook event {event_type} with status {order_status} for order {our_order_id}")
-        
-        return {'status': 'success'}, 200
-        
+        admin_message = f"Payment submitted for Order #{order.id} - Amount: Rs.{order.total_amount:.0f} - Transaction ID: {transaction_id} - Customer: {order.user.username}"
+        send_sms_notification(order)
     except Exception as e:
-        print(f"ERROR: Webhook processing exception: {e}")
-        import traceback
-        traceback.print_exc()
-        return {'status': 'error', 'message': str(e)}, 400
+        print(f"Error sending admin SMS: {e}")
+    
+    flash(f'Payment details submitted! Transaction ID: {transaction_id}. Your payment will be verified shortly.', 'success')
+    return redirect(url_for('payment_pending', order_id=order.id))
+
+@app.route('/payment/pending/<int:order_id>')
+@login_required
+def payment_pending(order_id):
+    """Payment pending verification page"""
+    order = db.session.get(Order, order_id)
+    if not order:
+        flash('Order not found', 'danger')
+        return redirect(url_for('index'))
+    
+    if order.user_id != current_user.id:
+        flash('Unauthorized access', 'danger')
+        return redirect(url_for('index'))
+    
+    # If already paid, redirect to success page
+    if order.payment_status == 'PAID':
+        return redirect(url_for('payment_success', order_id=order.id))
+    
+    return render_template('payment_pending.html', order=order)
 
 
 @app.route('/payment/success/<int:order_id>')
@@ -2360,7 +2013,7 @@ def admin_delete_order(order_id):
 @app.route('/admin/order/cancel-paid/<int:order_id>', methods=['POST'])
 @login_required
 def admin_cancel_paid_order(order_id):
-    """Cancel a paid order and initiate refund (admin only)"""
+    """Cancel a paid order and initiate manual refund (admin only)"""
     if not current_user.is_admin:
         flash('Access denied', 'danger')
         return redirect(url_for('index'))
@@ -2380,42 +2033,18 @@ def admin_cancel_paid_order(order_id):
         flash('This order is already cancelled.', 'info')
         return redirect(url_for('admin_orders'))
     
-    # Check if we have payment_id for refund
-    if not order.payment_id:
-        flash('Cannot process refund - payment ID not found. Please process manually via Cashfree dashboard.', 'danger')
-        return redirect(url_for('admin_orders'))
+    # Mark order as cancelled and refund pending
+    order.status = 'Cancelled'
+    order.payment_status = 'REFUND_PENDING'
+    order.refund_note = f'Order cancelled by admin on {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}. Manual refund required for UPI payment of ₹{order.total_amount}. Transaction ID: {order.payment_id}'
     
-    # Process refund via Cashfree API
-    print(f"DEBUG: Attempting to process refund for Order #{order_id}")
-    refund_result = process_cashfree_refund(order)
+    # Restore product stock
+    for item in order.items:
+        item.product.stock += item.quantity
     
-    if refund_result['success']:
-        # Refund successful
-        order.status = 'Cancelled'
-        order.payment_status = 'REFUNDED'
-        order.refund_note = f"Refund processed successfully. Refund ID: {refund_result.get('refund_id')}. Amount: ₹{order.total_amount}"
-        
-        # Restore product stock
-        for item in order.items:
-            item.product.stock += item.quantity
-        
-        db.session.commit()
-        
-        flash(f'Order #{order_id} cancelled and refund of ₹{order.total_amount} processed successfully via Cashfree! Refund ID: {refund_result.get("refund_id")}', 'success')
-    else:
-        # Refund failed - mark as pending
-        order.status = 'Cancelled'
-        order.payment_status = 'REFUND_PENDING'
-        order.refund_note = f'Refund failed: {refund_result.get("error")}. Please process manually via Cashfree dashboard.'
-        
-        # Restore product stock anyway
-        for item in order.items:
-            item.product.stock += item.quantity
-        
-        db.session.commit()
-        
-        flash(f'Order cancelled but refund failed: {refund_result.get("error")}. Please process refund manually via Cashfree dashboard.', 'danger')
+    db.session.commit()
     
+    flash(f'Order #{order_id} cancelled. Please process manual refund of ₹{order.total_amount} to customer via UPI. Transaction ID: {order.payment_id}', 'warning')
     return redirect(url_for('admin_orders'))
 
 
@@ -2447,6 +2076,39 @@ def admin_mark_refunded(order_id):
     db.session.commit()
     
     flash(f'Order #{order_id} marked as refunded!', 'success')
+    return redirect(url_for('admin_orders'))
+
+
+@app.route('/admin/order/verify-payment/<int:order_id>', methods=['POST'])
+@login_required
+def admin_verify_payment(order_id):
+    """Verify and approve UPI payment (admin only)"""
+    if not current_user.is_admin:
+        flash('Access denied', 'danger')
+        return redirect(url_for('index'))
+    
+    order = db.session.get(Order, order_id)
+    if not order:
+        flash('Order not found', 'danger')
+        return redirect(url_for('admin_orders'))
+    
+    # Check if payment is pending
+    if order.payment_status != 'PENDING':
+        flash('This order payment is not pending verification.', 'warning')
+        return redirect(url_for('admin_orders'))
+    
+    # Mark payment as verified and paid
+    order.payment_status = 'PAID'
+    db.session.commit()
+    
+    # Send SMS notification to customer
+    try:
+        customer_sms = f"Payment verified for Order #{order.id}! Your order is being processed. Total: Rs.{order.total_amount:.0f} - Right Fit Thrissur"
+        send_customer_sms(order.phone, customer_sms)
+    except Exception as e:
+        print(f"Error sending customer SMS: {e}")
+    
+    flash(f'Payment verified and marked as PAID for Order #{order_id}!', 'success')
     return redirect(url_for('admin_orders'))
 
 
@@ -2571,9 +2233,10 @@ def admin_config_check():
             'Admin Phone': ADMIN_PHONE_NUMBER if ADMIN_PHONE_NUMBER else 'NOT SET',
             'API Key': 'SET' if SMS_GATEWAY_API_KEY else 'NOT SET'
         },
-        'Cashfree': {
-            'Environment': CASHFREE_ENVIRONMENT,
-            'Configured': bool(CASHFREE_APP_ID and CASHFREE_SECRET_KEY)
+        'UPI Payment': {
+            'UPI ID': UPI_ID,
+            'Payee Name': UPI_PAYEE_NAME,
+            'QR Code Path': UPI_QR_CODE_PATH
         }
     }
     
@@ -2954,8 +2617,9 @@ if __name__ == '__main__':
     print("="*60)
     print("🚀 RIGHT FIT E-COMMERCE - DEBUG MODE ENABLED")
     print("="*60)
-    print(f"Cashfree Environment: {CASHFREE_ENVIRONMENT}")
-    print(f"Cashfree Configured: {bool(CASHFREE_APP_ID and CASHFREE_SECRET_KEY)}")
+    print(f"UPI Payment System: Enabled")
+    print(f"UPI ID: {UPI_ID}")
+    print(f"QR Code: {UPI_QR_CODE_PATH}")
     print(f"Debug logging: ENABLED")
     print("="*60)
     app.run(debug=True, port=5000)

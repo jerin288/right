@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Payment - Right Fit Thrissur{% endblock %}
+{% block title %}UPI Payment - Right Fit Thrissur{% endblock %}
 
 {% block content %}
 <div class="container py-5">
@@ -8,7 +8,7 @@
         <div class="col-md-8">
             <div class="card shadow">
                 <div class="card-header bg-primary text-white text-center">
-                    <h4 class="mb-0"><i class="fas fa-credit-card"></i> Complete Your Payment</h4>
+                    <h4 class="mb-0"><i class="fas fa-qrcode"></i> UPI Payment</h4>
                 </div>
                 <div class="card-body">
                     <div class="text-center mb-4">
@@ -17,16 +17,67 @@
                     </div>
 
                     <div class="alert alert-info">
-                        <i class="fas fa-info-circle"></i> You will be redirected to Cashfree payment gateway. 
-                        Please complete the payment to confirm your order.
+                        <i class="fas fa-info-circle"></i> Scan the QR code below using any UPI app to complete your payment.
                     </div>
 
-                    <!-- Cashfree Payment Container -->
-                    <div id="payment-container"></div>
+                    <!-- UPI Payment Container -->
+                    <div class="text-center mb-4">
+                        <div class="border p-3 bg-white d-inline-block rounded">
+                            <img src="{{ url_for('static', filename=qr_code_path) }}" alt="UPI QR Code" class="img-fluid" style="max-width: 300px;">
+                        </div>
+                        <div class="mt-3">
+                            <p class="mb-1"><strong>UPI ID:</strong> <code>{{ upi_id }}</code></p>
+                            <p class="mb-1"><strong>Payee Name:</strong> {{ upi_payee_name }}</p>
+                            <p class="mb-0"><strong>Amount:</strong> <span class="text-success">₹{{ "%.2f"|format(order.total_amount) }}</span></p>
+                        </div>
+                    </div>
+
+                    <!-- UPI Payment Instructions -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0"><i class="fas fa-info-circle"></i> Payment Instructions</h6>
+                        </div>
+                        <div class="card-body">
+                            <ol class="mb-0">
+                                <li>Open any UPI app (Google Pay, PhonePe, Paytm, etc.)</li>
+                                <li>Scan the QR code above</li>
+                                <li>Verify the amount: <strong>₹{{ "%.2f"|format(order.total_amount) }}</strong></li>
+                                <li>Complete the payment</li>
+                                <li>Submit your transaction ID below</li>
+                            </ol>
+                        </div>
+                    </div>
+
+                    <!-- Transaction ID Submission Form -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-success text-white">
+                            <h6 class="mb-0"><i class="fas fa-check-circle"></i> Payment Completed?</h6>
+                        </div>
+                        <div class="card-body">
+                            <p>After completing the payment, please enter your UPI transaction ID below:</p>
+                            <form action="{{ url_for('confirm_payment', order_id=order.id) }}" method="post">
+                                <div class="mb-3">
+                                    <label for="transaction_id" class="form-label">UPI Transaction ID *</label>
+                                    <input type="text" class="form-control" id="transaction_id" name="transaction_id" 
+                                           placeholder="Enter your 12-digit transaction ID" required
+                                           pattern="[0-9]{12}" maxlength="12">
+                                    <small class="text-muted">You can find this in your UPI app's transaction history</small>
+                                </div>
+                                <button type="submit" class="btn btn-success w-100">
+                                    <i class="fas fa-paper-plane"></i> Submit Payment Details
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i> 
+                        <strong>Important:</strong> Your order will be confirmed once we verify your payment. This usually takes 5-10 minutes.
+                    </div>
 
                     <div class="text-center mt-3">
                         <a href="{{ url_for('order_confirmation', order_id=order.id) }}" class="btn btn-secondary">
-                            <i class="fas fa-arrow-left"></i> Cancel & Go Back
+                            <i class="fas fa-arrow-left"></i> Go Back to Order
                         </a>
                     </div>
                 </div>
@@ -34,35 +85,4 @@
         </div>
     </div>
 </div>
-
-<!-- Cashfree Checkout SDK -->
-<script src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
-
-<script>
-    // Initialize Cashfree
-    const cashfree = Cashfree({
-        mode: "{{ 'production' if cashfree_env == 'PRODUCTION' else 'sandbox' }}"
-    });
-
-    // Payment session ID from backend
-    const paymentSessionId = "{{ payment_session_id }}";
-
-    // Checkout options
-    const checkoutOptions = {
-        paymentSessionId: paymentSessionId,
-        returnUrl: "{{ url_for('payment_callback', _external=True) }}?order_id={{ order.cashfree_order_id }}",
-        redirectTarget: "_self"
-    };
-
-    // Open payment modal
-    cashfree.checkout(checkoutOptions).then((result) => {
-        if (result.error) {
-            console.error("Payment error:", result.error);
-            alert("Payment failed. Please try again.");
-        }
-        if (result.redirect) {
-            console.log("Payment redirecting...");
-        }
-    });
-</script>
 {% endblock %}

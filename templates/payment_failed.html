@@ -12,13 +12,13 @@
                         <i class="fas fa-times-circle text-danger" style="font-size: 80px;"></i>
                     </div>
                     
-                    <h2 class="text-danger mb-3">Payment Transaction Failed</h2>
-                    <p class="lead mb-4">Unfortunately, your online payment could not be processed at this time.</p>
+                    <h2 class="text-danger mb-3">Payment Not Verified</h2>
+                    <p class="lead mb-4">We have not received your payment yet or verification is pending.</p>
                     
                     <!-- Main Error Message -->
                     <div class="alert alert-danger border-2 border-danger mb-4">
                         <h5 class="alert-heading">
-                            <i class="fas fa-exclamation-circle"></i> Transaction Not Completed
+                            <i class="fas fa-exclamation-circle"></i> Payment Not Confirmed
                         </h5>
                         <hr>
                         <p class="mb-2">
@@ -27,7 +27,7 @@
                         <div class="text-start mt-3">
                             <p class="mb-2">
                                 <i class="fas fa-redo text-primary"></i> 
-                                <strong>Retry Payment:</strong> You can try the online payment again now or at a later time when convenient.
+                                <strong>Retry UPI Payment:</strong> You can scan the QR code again and complete the payment.
                             </p>
                             <p class="mb-0">
                                 <i class="fas fa-money-bill-wave text-success"></i> 
@@ -54,19 +54,18 @@
 
                     <div class="alert alert-warning">
                         <i class="fas fa-info-circle"></i> 
-                        <strong>Common reasons for payment failure:</strong>
+                        <strong>Common reasons for payment issues:</strong>
                         <ul class="text-start mt-2 mb-0 small">
-                            <li>Insufficient account balance</li>
-                            <li>Payment was cancelled by user</li>
-                            <li>Network connectivity issues</li>
-                            <li>Bank declined the transaction</li>
-                            <li>Payment timeout or session expired</li>
+                            <li>Payment not yet completed via UPI</li>
+                            <li>Incorrect UPI transaction ID submitted</li>
+                            <li>Payment verification still in progress</li>
+                            <li>Network connectivity issues during payment</li>
                         </ul>
                     </div>
 
                     <div class="d-grid gap-2 d-md-flex justify-content-md-center">
                         <a href="{{ url_for('initiate_payment', order_id=order.id) }}" class="btn btn-primary btn-lg">
-                            <i class="fas fa-redo"></i> Retry Payment
+                            <i class="fas fa-redo"></i> Retry UPI Payment
                         </a>
                         <a href="{{ url_for('order_confirmation', order_id=order.id) }}" class="btn btn-outline-secondary btn-lg">
                             <i class="fas fa-receipt"></i> View Order

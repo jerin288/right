@@ -39,7 +39,7 @@
                             {% if order.payment_method == 'COD' %}
                                 <span class="badge bg-success"><i class="fas fa-money-bill"></i> COD</span>
                             {% else %}
-                                <span class="badge bg-primary"><i class="fas fa-credit-card"></i> Online</span>
+                                <span class="badge bg-info"><i class="fas fa-qrcode"></i> UPI</span>
                             {% endif %}
                             <br>
                             {% if order.payment_status == 'PAID' %}
@@ -54,6 +54,9 @@
                                 <small><span class="badge bg-info mt-1">Refunded</span></small>
                             {% else %}
                                 <small><span class="badge bg-warning mt-1">Pending</span></small>
+                            {% endif %}
+                            {% if order.payment_id %}
+                                <br><small class="text-muted">TXN: {{ order.payment_id }}</small>
                             {% endif %}
                         </td>
                         <td>
@@ -107,10 +110,20 @@
                                 </small>
                             {% endif %}
                             <br>
+                            {% if order.payment_status == 'PENDING' and order.payment_method != 'COD' %}
+                            <form action="{{ url_for('admin_verify_payment', order_id=order.id) }}" 
+                                  method="post" class="d-inline" 
+                                  onsubmit="return confirm('Verify UPI payment for order #{{ order.id }}? Make sure you have received the payment.');
+">
+                                <button type="submit" class="btn btn-sm btn-success mt-1">
+                                    <i class="fas fa-check-circle"></i> Verify Payment
+                                </button>
+                            </form>
+                            {% endif %}
                             {% if order.payment_status == 'PAID' and order.status != 'Cancelled' %}
                             <form action="{{ url_for('admin_cancel_paid_order', order_id=order.id) }}" 
                                   method="post" class="d-inline" 
-                                  onsubmit="return confirm('Cancel PAID order #{{ order.id }}? This will mark refund as pending. You must process refund manually via Cashfree!');">
+                                  onsubmit="return confirm('Cancel PAID order #{{ order.id }}? This will mark refund as pending. You must process refund manually via UPI!');">
                                 <button type="submit" class="btn btn-sm btn-warning mt-1">
                                     <i class="fas fa-undo"></i> Cancel & Refund
                                 </button>

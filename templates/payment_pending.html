@@ -1,19 +1,19 @@
 {% extends "base.html" %}
 
-{% block title %}Payment Successful - Right Fit Thrissur{% endblock %}
+{% block title %}Payment Verification Pending - Right Fit Thrissur{% endblock %}
 
 {% block content %}
 <div class="container py-5">
     <div class="row justify-content-center">
         <div class="col-md-8">
-            <div class="card shadow border-success">
+            <div class="card shadow border-warning">
                 <div class="card-body text-center py-5">
                     <div class="mb-4">
-                        <i class="fas fa-check-circle text-success" style="font-size: 80px;"></i>
+                        <i class="fas fa-clock text-warning" style="font-size: 80px;"></i>
                     </div>
                     
-                    <h2 class="text-success mb-3">Payment Successful!</h2>
-                    <p class="lead">Your payment has been processed successfully.</p>
+                    <h2 class="text-warning mb-3">Payment Verification Pending</h2>
+                    <p class="lead">Your payment is being verified. This usually takes 5-10 minutes.</p>
                     
                     <div class="card bg-light my-4">
                         <div class="card-body">
@@ -22,14 +22,14 @@
                                     <strong>Order ID:</strong> #{{ order.id }}
                                 </div>
                                 <div class="col-md-6 mb-2">
-                                    <strong>Amount Paid:</strong> ₹{{ "%.2f"|format(order.total_amount) }}
+                                    <strong>Amount:</strong> ₹{{ "%.2f"|format(order.total_amount) }}
                                 </div>
                                 <div class="col-md-6 mb-2">
                                     <strong>Payment Method:</strong> UPI Payment
                                 </div>
                                 <div class="col-md-6 mb-2">
                                     <strong>Payment Status:</strong> 
-                                    <span class="badge bg-success">{{ order.payment_status }}</span>
+                                    <span class="badge bg-warning">Verification Pending</span>
                                 </div>
                                 {% if order.payment_id %}
                                 <div class="col-12 mt-2">
@@ -42,7 +42,7 @@
 
                     <div class="alert alert-info">
                         <i class="fas fa-info-circle"></i> 
-                        Your order will be processed shortly. You will receive updates about your order status.
+                        We are verifying your payment. You will receive an SMS once the payment is confirmed. You can also check your order status anytime.
                     </div>
 
                     <div class="d-grid gap-2 d-md-flex justify-content-md-center">
@@ -55,6 +55,12 @@
                         <a href="{{ url_for('index') }}" class="btn btn-outline-primary btn-lg">
                             <i class="fas fa-home"></i> Continue Shopping
                         </a>
+                    </div>
+
+                    <div class="mt-4">
+                        <p class="text-muted">
+                            Need help? Contact us at <a href="mailto:rightfit2023@gmail.com">rightfit2023@gmail.com</a> or call +91 8157971886
+                        </p>
                     </div>
                 </div>
             </div>
